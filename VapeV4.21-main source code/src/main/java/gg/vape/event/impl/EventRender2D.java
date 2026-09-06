@@ -1,0 +1,50 @@
+package gg.vape.event.impl;
+
+import gg.vape.Vape;
+import gg.vape.event.Event;
+import gg.vape.event.EventListeners;
+import gg.vape.module.none.ClientSettings;
+import gg.vape.utils.render.GuiRenderPrimitives;
+import gg.vape.wrapper.impl.ForgeVersion;
+import gg.vape.wrapper.impl.GlStateManager;
+import gg.vape.wrapper.impl.Minecraft;
+
+public class EventRender2D
+extends Event {
+    private static final EventListeners EVENT_LISTENERS = new EventListeners();
+    private static int displayHeight;
+    private static int displayWidth;
+
+    public static EventListeners getEventListeners() {
+        return EVENT_LISTENERS;
+    }
+
+    public static void create() {
+        if (ForgeVersion.MC_1_17.d() && Minecraft.thePlayer().isNull()) {
+            return;
+        }
+        displayWidth = Minecraft.J();
+        displayHeight = Minecraft.h();
+        GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
+        GuiRenderPrimitives.o(displayWidth, displayHeight);
+        Vape.INSTANCE.getModManager().getMod(ClientSettings.class).renderHudOverlay();
+        EventRender2D eventRender2D = new EventRender2D();
+        eventRender2D.fire();
+        GuiRenderPrimitives.L(displayWidth, displayHeight);
+    }
+
+
+    @Override
+    public EventListeners getListeners() {
+        return EVENT_LISTENERS;
+    }
+
+    public int getDisplayWidth() {
+        return displayWidth;
+    }
+
+    public int getDisplayHeight() {
+        return displayHeight;
+    }
+}
+

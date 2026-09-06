@@ -1,0 +1,102 @@
+﻿[2026-09-06 12:36:36.948] materialized embedded product JAR: C:\Users\cheld\AppData\Local\Temp\Vape421Recovery\vape421-product-1712.jar (16496741 bytes)
+[2026-09-06 12:36:36.981] registered NativeBridge methods (9 sample + gat + cpy + 5 stub)
+[2026-09-06 12:36:36.990] NativeBridge linked from C:\Users\cheld\AppData\Local\Temp\Vape421Recovery\vape421-product-1712.jar
+[2026-09-06 12:36:37.000] vape421.forgeMinor was unset; defaulted to 15 (MC 1.8.9)
+[2026-09-06 12:36:37.330] client error report: LOAD loadMappings
+[2026-09-06 12:36:38.520] client error report: OK loadMappings
+[2026-09-06 12:36:38.530] client error report: LOAD initAccountInfo
+[2026-09-06 12:36:38.575] client error report: Failed to initialize account details2: 
+Exception java.util.concurrent.CompletionException java.util.concurrent.CompletionException: java.lang.RuntimeException: java.lang.Exception: java.lang.RuntimeException: java.net.ConnectException: Connection refused: getsockopt
+	at java.base/java.util.concurrent.CompletableFuture.encodeThrowable(Unknown Source)
+	at java.base/java.util.concurrent.CompletableFuture.completeThrowable(Unknown Source)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(Unknown Source)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.exec(Unknown Source)
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(Unknown Source)
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(Unknown Source)
+	at java.base/java.util.concurrent.ForkJoinPool.scan(Unknown Source)
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(Unknown Source)
+Caused by: java.lang.RuntimeException: java.lang.Exception: java.lang.RuntimeException: java.net.ConnectException: Connection refused: getsockopt
+	at Genesis//gg.vape.api.ApiServices.requestAccountInfo(ApiServices.java:61)
+	at Genesis//gg.vape.api.ApiServices.lambda$getAccountInfo$0(ApiServices.java:27)
+	... 7 more
+Caused by: java.lang.Exception: java.lang.RuntimeException: java.net.ConnectException: Connection refused: getsockopt
+	at Genesis//gg.vape.api.ApiHttpClient.withConnection(ApiHttpClient.java:71)
+	at Genesis//gg.vape.api.ApiHttpClient.get(ApiHttpClient.java:180)
+	at Genesis//gg.vape.api.ApiHttpClient.getApiResponse(ApiHttpClient.java:90)
+	at Genesis//gg.vape.api.ApiServices.requestAccountInfo(ApiServices.java:57)
+	... 8 more
+Caused by: java.lang.RuntimeException: java.net.ConnectException: Connection refused: getsockopt
+	at Genesis//gg.vape.api.ApiHttpClient.readJsonResponse(ApiHttpClient.java:80)
+	at Genesis//gg.vape.api.ApiHttpClient.lambda$get$2(ApiHttpClient.java:180)
+	at Genesis//gg.va
+[2026-09-06 12:36:38.583] client error report: WARN initAccountInfo; continuing without account information
+[2026-09-06 12:36:38.595] client error report: LOAD initializeManagers
+[2026-09-06 12:36:38.641] client error report: DEBUG 
+Exception java.util.concurrent.CompletionException java.util.concurrent.CompletionException: java.lang.RuntimeException: java.lang.Exception: java.lang.RuntimeException: java.net.ConnectException: Connection refused: getsockopt
+	at java.base/java.util.concurrent.CompletableFuture.encodeThrowable(Unknown Source)
+	at java.base/java.util.concurrent.CompletableFuture.completeThrowable(Unknown Source)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(Unknown Source)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.exec(Unknown Source)
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(Unknown Source)
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(Unknown Source)
+	at java.base/java.util.concurrent.ForkJoinPool.scan(Unknown Source)
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(Unknown Source)
+Caused by: java.lang.RuntimeException: java.lang.Exception: java.lang.RuntimeException: java.net.ConnectException: Connection refused: getsockopt
+	at Genesis//gg.vape.api.PublicProfileApi.requestMostPopularTags(PublicProfileApi.java:363)
+	at Genesis//gg.vape.api.PublicProfileApi.lambda$getMostPopularTags$17(PublicProfileApi.java:378)
+	... 7 more
+Caused by: java.lang.Exception: java.lang.RuntimeException: java.net.ConnectException: Connection refused: getsockopt
+	at Genesis//gg.vape.api.ApiHttpClient.withConnection(ApiHttpClient.java:71)
+	at Genesis//gg.vape.api.ApiHttpClient.get(ApiHttpClient.java:180)
+	at Genesis//gg.vape.api.ApiHttpClient.getApiResponse(ApiHttpClient.java:90)
+	at Genesis//gg.vape.api.PublicProfileApi.requestMostPopularTags(PublicProfileApi.java:360)
+	... 8 more
+Caused by: java.lang.RuntimeException: java.net.ConnectException: Connection refused: getsockopt
+	at Genesis//gg.vape.api.ApiHttpClient.readJsonResponse(ApiHttpClient.java:80)
+	at Genesis//gg.vape.api.ApiHttpClient.lambda$get$2(ApiHttpClient.java:180)
+	at G
+[2026-09-06 12:36:38.656] client error report: DEBUG 
+Exception java.util.concurrent.CompletionException java.util.concurrent.CompletionException: java.lang.RuntimeException: java.lang.Exception: java.lang.RuntimeException: java.net.ConnectException: Connection refused: getsockopt
+	at java.base/java.util.concurrent.CompletableFuture.encodeThrowable(Unknown Source)
+	at java.base/java.util.concurrent.CompletableFuture.completeThrowable(Unknown Source)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(Unknown Source)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.exec(Unknown Source)
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(Unknown Source)
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(Unknown Source)
+	at java.base/java.util.concurrent.ForkJoinPool.scan(Unknown Source)
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(Unknown Source)
+Caused by: java.lang.RuntimeException: java.lang.Exception: java.lang.RuntimeException: java.net.ConnectException: Connection refused: getsockopt
+	at Genesis//gg.vape.api.PublicProfileApi.requestMostPopularTags(PublicProfileApi.java:363)
+	at Genesis//gg.vape.api.PublicProfileApi.lambda$getMostPopularTags$17(PublicProfileApi.java:378)
+	... 7 more
+Caused by: java.lang.Exception: java.lang.RuntimeException: java.net.ConnectException: Connection refused: getsockopt
+	at Genesis//gg.vape.api.ApiHttpClient.withConnection(ApiHttpClient.java:71)
+	at Genesis//gg.vape.api.ApiHttpClient.get(ApiHttpClient.java:180)
+	at Genesis//gg.vape.api.ApiHttpClient.getApiResponse(ApiHttpClient.java:90)
+	at Genesis//gg.vape.api.PublicProfileApi.requestMostPopularTags(PublicProfileApi.java:360)
+	... 8 more
+Caused by: java.lang.RuntimeException: java.net.ConnectException: Connection refused: getsockopt
+	at Genesis//gg.vape.api.ApiHttpClient.readJsonResponse(ApiHttpClient.java:80)
+	at Genesis//gg.vape.api.ApiHttpClient.lambda$get$2(ApiHttpClient.java:180)
+	at G
+[2026-09-06 12:36:39.570] registered org.lwjgl.opengl.WindowsDisplay.nUpdate
+[2026-09-06 12:36:41.891] client error report: DEBUG Failed to find 95 item(s):
+[2026-09-06 12:36:48.086] client error report: DEBUG 
+Exception java.lang.NullPointerException java.lang.NullPointerException: Cannot invoke "gg.vape.config.GlobalSettingsPayload.initializeDefaults()" because "this.settings" is null
+	at Genesis//gg.vape.manager.client.GlobalSettingsController.load(GlobalSettingsController.java:46)
+	at Genesis//gg.vape.manager.client.OnlineConnectionManager.initialize(OnlineConnectionManager.java:567)
+	at Genesis//gg.vape.Vape.initializeManagers(Vape.java:431)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.base/java.lang.reflect.Method.invoke(Unknown Source)
+	at Genesis//gg.vape.runtime.NativeBridge.invokeVoidInit(NativeBridge.java:355)
+	at Genesis//gg.vape.runtime.NativeBridge.start(NativeBridge.java:346)
+
+[2026-09-06 12:36:48.105] client error report: OK initializeManagers
+[2026-09-06 12:36:48.122] NativeBridge.start completed; injection is active
+[2026-09-06 12:37:21.690] client error report: DEBUG Found file attempting to read: bahnschrift
+[2026-09-06 12:40:26.327] client error report: DEBUG Gui Closed 2

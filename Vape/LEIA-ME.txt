@@ -1,0 +1,7 @@
+COMO USAR
+1. Abra o Minecraft 1.8.9 (Lunar ou Forge).
+2. Duplo-clique em Vape421Injector.exe, escolha o javaw.exe, Enter.
+3. No jogo, aperte RShift para abrir o menu.
+
+Se o Windows apagar o .exe: Windows Security > Exclusões > adicione esta pasta,
+depois restaure o arquivo no Histórico de proteção. Rode como administrador.
