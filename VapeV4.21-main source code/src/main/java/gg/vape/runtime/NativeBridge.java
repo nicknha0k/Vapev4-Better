@@ -299,8 +299,19 @@ public class NativeBridge {
     }
 
     //GetProfile
+    // Alterado: le do .json local (LocalJsonConfigStore) em vez de retornar
+    // sempre o DEFAULT_CONFIG_JSON hardcoded (que fazia parecer que "nunca salva").
     public static String gp(String key) {
         if ("all".equals(key)) {
+            try {
+                com.google.gson.JsonObject local =
+                        gg.vape.config.LocalJsonConfigStore.loadLocalConfig();
+                if (local != null && !local.entrySet().isEmpty()) {
+                    String json = local.toString();
+                    return Base64Util.encodeUtf8Base64(json);
+                }
+            } catch (Throwable ignored) {
+            }
             return Base64Util.encodeUtf8Base64(DEFAULT_CONFIG_JSON);
         }
         return "";
@@ -656,6 +667,26 @@ public class NativeBridge {
     public static native int ss_2(String value);
 
     public static String sp(String key, String value) {
+        // Espelha escritas legadas ("all" + base64) no .json local.
+        try {
+            if ("all".equals(key) && value != null && !value.isEmpty()) {
+                String json;
+                try {
+                    byte[] decoded = Base64Util.decodeBase64(value);
+                    json = new String(decoded, java.nio.charset.StandardCharsets.UTF_8).trim();
+                } catch (Throwable t2) {
+                    json = value;
+                }
+                if (json != null && json.startsWith("{")) {
+                    com.google.gson.JsonObject obj =
+                            new com.google.gson.Gson().fromJson(json, com.google.gson.JsonObject.class);
+                    if (obj != null) {
+                        gg.vape.config.LocalJsonConfigStore.writePayload(obj);
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
         return null;
     }
 

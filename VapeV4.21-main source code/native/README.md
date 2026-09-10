@@ -109,7 +109,9 @@ JAR into the process temp directory, loads it through the context ClassLoader,
 registers the nine authoritative methods plus the Product `gat()` compatibility
 native, and calls
 `NativeBridge.start()` automatically. No second command or start flag is
-required. Inspect `vape421-native.log` beside the DLL for the exact result.
+required. Nenhum arquivo de log e criado (sem vape421-native.log / probe.log);
+o unico .txt e o tutorial (Vape/LEIA-ME.txt). Diagnostico vai apenas para o
+debugger via OutputDebugString.
 
 The injection payload is compiled with `--release 8`; its project classes use
 class-file major version 52. Runtime dependencies are resolved from the

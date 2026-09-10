@@ -31,9 +31,6 @@ import gg.vape.wrapper.impl.Vec3;
 import gg.vape.wrapper.impl.Vec3i;
 import gg.vape.wrapper.impl.WorldClient;
 import java.awt.Color;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.function.ToDoubleFunction;
 import org.lwjgl.opengl.GL11;
@@ -243,28 +240,9 @@ extends Mod {
     }
 
     private void flushSamplesToFile() {
-        if (!this.logToFile.getEffectiveValue().booleanValue()) {
-            this.pendingFileSamples.clear();
-            return;
-        }
-        String outputPath = "C:\\dump\\outgoing_packets_" + this.sessionId + ".txt";
-        File file = new File(outputPath);
-        if (!file.getParentFile().exists()) {
-            file.getParentFile().mkdirs();
-        }
-        try {
-            FileWriter fileWriter = new FileWriter(outputPath, true);
-            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-            for (RotationDebugSample rotationDebugSample : this.pendingFileSamples) {
-                bufferedWriter.write(rotationDebugSample.toString() + '\n');
-            }
-            bufferedWriter.flush();
-            bufferedWriter.close();
-            this.pendingFileSamples.clear();
-        }
-        catch (Exception exception) {
-            Vape.logThrowable(exception);
-        }
+        // Escrita em arquivo desativada por pedido do usuario: sem .log/.txt
+        // de debug. Mantem o modulo so com overlay em tela.
+        this.pendingFileSamples.clear();
     }
 
     @EventHandler

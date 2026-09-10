@@ -23,6 +23,10 @@ public class GuiScreenNativeCallbackBridge {
     public static void drawScreen(Object screen, int mouseX, int mouseY, float partialTicks) {
         ClientSettings clientSettings = Vape.INSTANCE.getModManager().getMod(ClientSettings.class);
         if (!clientSettings.inputEnabled) {
+            // AntiScreenShare: menu nao aparece em screenshots (F2).
+            if (gg.vape.module.render.AntiScreenShare.isScreenshotHiding()) {
+                return;
+            }
             clientSettings.renderGui();
         }
     }

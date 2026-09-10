@@ -862,17 +862,12 @@ static jobject JNICALL native_inv(
  * surface for test robustness; the sample itself implemented no logic for them.
  */
 static void JNICALL native_sce(JNIEnv *env, jclass bridge, jstring message) {
-    const char *chars;
+    /* Debug file logging desativado: sem vape421-native.log.
+       Mantido como no-op para nao criar arquivo; erros vao para o debugger
+       apenas se necessario. O unico .txt mantido e o tutorial (LEIA-ME.txt). */
+    (void)env;
     (void)bridge;
-    if (message == NULL) {
-        vape_log(L"client error report: <null>");
-        return;
-    }
-    chars = (*env)->GetStringUTFChars(env, message, NULL);
-    if (chars != NULL) {
-        vape_log(L"client error report: %hs", chars);
-        (*env)->ReleaseStringUTFChars(env, message, chars);
-    }
+    (void)message;
 }
 
 static void JNICALL native_ss(JNIEnv *env, jclass bridge, jstring value) {

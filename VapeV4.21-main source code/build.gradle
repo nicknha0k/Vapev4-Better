@@ -295,7 +295,8 @@ tasks.register('prepareInjectionBundle', Sync) {
     from(nativeBuildDirectory.map { it.dir('dist') }) {
         include 'Vape421Native.dll', 'Vape421Injector.exe'
     }
-    from(file('native/README.md'))
+    // Sem README.md no bundle: o unico .txt distribuido e o tutorial (Vape/LEIA-ME.txt).
+    // Sem escrita de .log em tempo de execucao (ver dllmain.c / native_bridge.c / probe.c).
     into(injectionBundleDirectory)
     doLast {
         def dll = injectionBundleDirectory.get().file('Vape421Native.dll').asFile

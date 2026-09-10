@@ -5,6 +5,7 @@ import gg.vape.config.ClientSettings;
 import gg.vape.mapping.MappedClasses;
 import gg.vape.module.Category;
 import gg.vape.module.Mod;
+import gg.vape.module.combat.aimassist.AimAssistCrewXSubModule;
 import gg.vape.module.combat.aimassist.AimAssistRotationSubModule;
 import gg.vape.module.combat.aimassist.AimAssistTargetingSubModule;
 import gg.vape.module.control.SharedModuleControlClaims;
@@ -49,6 +50,7 @@ extends Mod {
     public final ModeOption threatMode;
     private final NumberValue horizontalSpeed;
     private final AimAssistRotationSubModule simpleRotation = new AimAssistRotationSubModule(this, "Simple");
+    private final AimAssistCrewXSubModule crewXRotation = new AimAssistCrewXSubModule(this, "CrewX");
     private final LimitValue allowedItems;
     private final NumberValue maxAngle;
     private final BooleanValue limitToItems;
@@ -61,9 +63,14 @@ extends Mod {
     private final ModeOption distanceMode;
     private final EntityTargetFilterValue targetFilter;
     private final NumberValue verticalSpeed;
+    private final NumberValue smoothing;
     private final BooleanValue requireMouseDown;
     public final ModeOption armorMode;
     private final NumberValue distance;
+    // Port CrewX AimAssist: filtros que faltavam no Vape.
+    private final BooleanValue weaponOnly;
+    private final BooleanValue allowTools;
+    private final BooleanValue teamsCheck;
 
     @Nullable
     public EntityLivingBase findBestTarget() {
@@ -123,6 +130,10 @@ extends Mod {
         return this.verticalSpeed;
     }
 
+    public NumberValue getSmoothing() {
+        return this.smoothing;
+    }
+
     public boolean isValidTarget(EntityLivingBase target) {
         if (target.isNull()) {
             return false;
@@ -136,13 +147,26 @@ extends Mod {
         if (Minecraft.thePlayer().getDistanceToEntity(target) >= (float)((Double)this.distance.getValue()).intValue()) {
             return false;
         }
-        if (RotationUtil.a(Minecraft.thePlayer(), target) > ((Double)this.maxAngle.getValue()).intValue() / 2) {
+        if (RotationUtil.a(Minecraft.thePlayer(), target) > ((Double)this.maxAngle.getValue()).floatValue()) {
             return false;
         }
         if (Vape.INSTANCE.getFriendManager().isFriend(target)) {
             return false;
         }
         if (target.equals(Minecraft.thePlayer().S$src$Lgg_vape_wrapper_impl_Entity_$dgzs12())) {
+            return false;
+        }
+        // Port CrewX: filtro de time explicito (o targetFilter ja checa time/bot,
+        // mas aqui fica visivel e desligavel no menu do AimAssist).
+        if (this.teamsCheck.getEffectiveValue()
+                && Vape.INSTANCE.getClientSettings().isTeammate(Minecraft.thePlayer(), new Entity(target.getObject()))) {
+            return false;
+        }
+        // Port CrewX: AntiBot explicito no AimAssist. O targetFilter ja chama
+        // isBot(), mas apos o bugfix do AntiBot.isBot() (que retornava false
+        // sempre em 1.8.9) essa checagem volta a funcionar; mantemos redundante
+        // para deixar claro no codigo que AimAssist filtra bots.
+        if (Vape.INSTANCE.getClientSettings().isBot(new Entity(target.getObject()))) {
             return false;
         }
         return this.passesItemFilter(target);
@@ -154,6 +178,11 @@ extends Mod {
     }
 
     private boolean hasRequiredItem() {
+        if (this.weaponOnly.getEffectiveValue()) {
+            if (!this.isHoldingWeapon()) {
+                return false;
+            }
+        }
         if (!this.limitToItems.getEffectiveValue().booleanValue()) {
             return true;
         }
@@ -161,10 +190,34 @@ extends Mod {
         return this.allowedItems.isValid(itemStack, false);
     }
 
+    /** Port CrewX: weapons-only (+allow-tools). Espada sempre vale; machado/pa/picaretas so com allow-tools. */
+    private boolean isHoldingWeapon() {
+        try {
+            ItemStack held = Minecraft.thePlayer().getHeldItemHand();
+            if (held == null || held.isNull()) {
+                return false;
+            }
+            gg.vape.wrapper.impl.Item item = held.getItem();
+            if (item == null || item.isNull()) {
+                return false;
+            }
+            if (item.isInstance(MappedClasses.V5)) {
+                return true;
+            }
+            if (this.allowTools.getEffectiveValue()) {
+                return item.isInstance(MappedClasses.YP)
+                        || item.isInstance(MappedClasses.DU)
+                        || item.isInstance(MappedClasses.FM);
+            }
+        } catch (Throwable ignored) {
+        }
+        return false;
+    }
+
     public AimAssist() {
         super("AimAssist", -327674, Category.COMBAT, "Smoothly aims to closest valid target");
         this.adaptiveTargeting = new AimAssistTargetingSubModule(this, "Adaptive");
-        this.mode = ModeValue.create((Object)this, "Mode", "Simple - Lightweight smooth aiming\nAdaptive - Advanced tracking with adaptive behavior", (ModeSelection)this.simpleRotation.getSelectionValue(), this.simpleRotation.getSelectionValue(), this.adaptiveTargeting.getSelectionValue());
+        this.mode = ModeValue.create((Object)this, "Mode", "Simple - Lightweight smooth aiming\nAdaptive - Advanced tracking with adaptive behavior\nCrewX - Direct CrewX-style aim (horizontal/vertical speed + smoothing)", (ModeSelection)this.crewXRotation.getSelectionValue(), this.simpleRotation.getSelectionValue(), this.adaptiveTargeting.getSelectionValue(), this.crewXRotation.getSelectionValue());
         this.targetFilter = EntityTargetFilterValue.createForModule(this);
         this.requireMouseDown = BooleanValue.create(this, "Require mouse down", true, "Only aim while mouse is down");
         this.aimVertically = BooleanValue.create(this, "Aim vertically", false, "Aims up and down as well");
@@ -174,10 +227,15 @@ extends Mod {
         this.blockBreakItems = LimitValue.create(this, "aimassist-blockbreak-items", "Items", LimitValue.ALLOW_LIST_COLOR, Arrays.asList(new ItemLimitData("pickaxes"), new ItemLimitData("shovels")));
         this.limitToItems = BooleanValue.create(this, "Limit to items", false, "AimAssist functions only while holding selected items");
         this.allowedItems = LimitValue.create(this, "aimassist-alloweditems", "Allowed Items", LimitValue.ALLOW_LIST_COLOR, new ItemLimitData("swords"));
-        this.verticalSpeed = NumberValue.create(this, "Vertical speed", "#.#", "", 1.0, 5.0, 10.0);
-        this.horizontalSpeed = NumberValue.create(this, "Horizontal speed", "#.#", "", 1.0, 5.0, 10.0);
-        this.maxAngle = NumberValue.create(this, "Max angle", "#", "", 1.0, 180.0, 360.0, 1.0, "Maximum allowed angle to still aim at target");
-        this.distance = NumberValue.create(this, "Distance", "#.#", "", 1.0, 5.0, 8.0, 0.1, "Maximum distance allowed to still aim at target");
+        // Valores iguais aos do CrewX (crewx/module/modules/combat/AimAssist.java).
+        this.weaponOnly = BooleanValue.create(this, "weapons-only", true, "So mira segurando espada (CrewX weapons-only)");
+        this.allowTools = BooleanValue.create(this, "allow-tools", false, "Permite machado/picaretas/pa como arma (CrewX allow-tools)");
+        this.teamsCheck = BooleanValue.create(this, "teams", true, "Ignora companheiros de time (CrewX teams)");
+        this.verticalSpeed = NumberValue.create(this, "vertical-speed", "#.#", "", 0.0, 0.0, 10.0, 0.1, "Velocidade vertical (CrewX vertical-speed)");
+        this.horizontalSpeed = NumberValue.create(this, "horizontal-speed", "#.#", "", 0.0, 3.0, 10.0, 0.1, "Velocidade horizontal (CrewX horizontal-speed)");
+        this.smoothing = NumberValue.create(this, "smoothing", "#", "%", 0.0, 50.0, 100.0, 1.0, "Suavizacao da mira (CrewX smoothing)");
+        this.maxAngle = NumberValue.create(this, "fov", "#", "", 30.0, 90.0, 360.0, 1.0, "Campo de visao maximo para mirar (CrewX fov)");
+        this.distance = NumberValue.create(this, "range", "#.#", "", 3.0, 4.5, 8.0, 0.1, "Alcance maximo para mirar (CrewX range)");
         this.distanceMode = new ModeOption("Distance");
         this.yawMode = new ModeOption("Yaw");
         this.armorMode = new ModeOption("Armor");
@@ -193,7 +251,8 @@ extends Mod {
         this.breakBlocksWhitelist.setCompactListValue(this.blockBreakItems);
         this.breakBlocksWhitelist.addDependentValues(this.blockBreakItems);
         this.checkBlockBreak.addDependentValues(this.breakBlocksWhitelist);
-        this.addValue(this.mode, this.targetFilter, this.requireMouseDown, this.strafeIncrease, this.checkBlockBreak, this.breakBlocksWhitelist, this.blockBreakItems, this.aimVertically, this.verticalSpeed, this.horizontalSpeed, this.maxAngle, this.distance, this.limitToItems, this.allowedItems, this.targetArea, this.targetMode);
+        this.addValue(this.mode, this.targetFilter, this.requireMouseDown, this.strafeIncrease, this.checkBlockBreak, this.breakBlocksWhitelist, this.blockBreakItems, this.aimVertically, this.verticalSpeed, this.horizontalSpeed, this.smoothing, this.maxAngle, this.distance, this.limitToItems, this.allowedItems, this.targetArea, this.targetMode, this.weaponOnly, this.allowTools, this.teamsCheck);
+        this.weaponOnly.addDependentValues(this.allowTools);
         this.horizontalSpeed.setMaximumFractionDigits(0);
     }
 
@@ -213,6 +272,9 @@ extends Mod {
         }
         if (this.adaptiveTargeting.isSelectedSubModule()) {
             return this.adaptiveTargeting.getTarget();
+        }
+        if (this.crewXRotation.isSelectedSubModule()) {
+            return this.crewXRotation.getTarget();
         }
         return null;
     }

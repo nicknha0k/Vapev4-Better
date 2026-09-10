@@ -4,6 +4,7 @@ import gg.vape.Vape;
 import gg.vape.config.ClientSettings;
 import gg.vape.event.EventHandler;
 import gg.vape.event.impl.EventEntityJoinWorld;
+import gg.vape.event.impl.EventPacketReceive;
 import gg.vape.event.impl.EventPrePlayerTick;
 import gg.vape.event.impl.EventPreTick;
 import gg.vape.mapping.MappedClasses;
@@ -23,6 +24,7 @@ import gg.vape.utils.MutableColor;
 import gg.vape.utils.RotationUtil;
 import gg.vape.value.BooleanValue;
 import gg.vape.value.ModeValue;
+import gg.vape.value.NumberValue;
 import gg.vape.wrapper.impl.Block;
 import gg.vape.wrapper.impl.BlockPos;
 import gg.vape.wrapper.impl.BlockState;
@@ -44,8 +46,10 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,6 +91,21 @@ extends Mod {
     private final Map<Integer, Integer> botScoreByEntityId;
     private final ModeOption blackOption;
     private final ModeOption whiteOption;
+    // Port CrewX AntiBot: deteccao por pacotes + estado da entidade.
+    private final Set<Integer> swungSet = new HashSet<Integer>();
+    private final Set<Integer> crittedSet = new HashSet<Integer>();
+    private final NumberValue minTicks;
+    private final NumberValue minNameLen;
+    private final NumberValue maxNameLen;
+    private final BooleanValue neverSwungCheck;
+    private final BooleanValue neverCrittedCheck;
+    private final BooleanValue illegalPitchCheck;
+    private final BooleanValue zeroHealthCheck;
+    private final BooleanValue illegalHealthCheck;
+    private final BooleanValue fakeEntityIdCheck;
+    private final BooleanValue tooYoungCheck;
+    private final BooleanValue duplicateProfileCheck;
+    private final BooleanValue badNameCheck;
 
     @Nullable
     public MutableColor getEntityTeamColor(RenderEntityContext renderEntityContext) {
@@ -119,6 +138,43 @@ extends Mod {
 
     public boolean isServerTeamFilteringEnabled() {
         return this.isEnabled() && this.teamsByServer.getEffectiveValue() != false;
+    }
+
+    @EventHandler
+    public void onPacketReceive(EventPacketReceive event) {
+        if (!this.isAntiBotEnabled()) {
+            return;
+        }
+        try {
+            Object handle = event.getPacketInstance();
+            if (handle == null) {
+                return;
+            }
+            if (MappedClasses.ZQ != null && MappedClasses.ZQ.isInstance(handle)) {
+                gg.vape.wrapper.impl.SPacketAnimation anim =
+                        new gg.vape.wrapper.impl.SPacketAnimation(handle);
+                int type = anim.getAnimationType();
+                int id = anim.getEntityId();
+                if (type == 0) {
+                    this.swungSet.add(id);
+                } else if (type == 4 || type == 5) {
+                    this.crittedSet.add(id);
+                }
+                return;
+            }
+            if (MappedClasses.Yv != null && MappedClasses.Yv.isInstance(handle)) {
+                gg.vape.wrapper.impl.SPacketDestroyEntities destroy =
+                        new gg.vape.wrapper.impl.SPacketDestroyEntities(handle);
+                int[] ids = destroy.getEntityIds();
+                if (ids != null) {
+                    for (int id : ids) {
+                        this.swungSet.remove(id);
+                        this.crittedSet.remove(id);
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
     }
 
     @EventHandler
@@ -341,10 +397,19 @@ extends Mod {
     }
 
     @Override
+    public void onEnable() {
+        super.onEnable();
+        this.swungSet.clear();
+        this.crittedSet.clear();
+    }
+
+    @Override
     public void onDisable() {
         this.pingByEntityId.clear();
         this.botScoreByEntityId.clear();
         this.trackedEntities.clear();
+        this.swungSet.clear();
+        this.crittedSet.clear();
     }
 
     @Nullable
@@ -511,14 +576,18 @@ extends Mod {
         if (!this.isAntiBotEnabled()) {
             return false;
         }
-        if (!ClientSettings.IS_LEGACY_1_7) {
-            return false;
-        }
+        // BUGFIX: o guard antigo ("if (!IS_LEGACY_1_7) return false") desligava
+        // o AntiBot em 1.8.9, entao AimAssist/KillAura nunca filtravam bots.
+        // Removido: o AntiBot agora funciona em 1.7.10 e 1.8.9+.
         if (entity.isInstance(MappedClasses.z5)) {
             return false;
         }
         if (entity.isInstance(MappedClasses.Yl)) {
             EntityPlayer entityPlayer = new EntityPlayer(entity);
+            // Checks portados do CrewX (crewx/module/modules/misc/AntiBot.java).
+            if (this.isCrewXBot(entityPlayer)) {
+                return true;
+            }
             if (this.getPing(Minecraft.thePlayer()) == 1) {
                 int entityPing = this.getPing(entityPlayer);
                 if (entityPing != -1) {
@@ -544,6 +613,126 @@ extends Mod {
         return this.isTeammate(null, entity);
     }
 
+    /**
+     * Checks portados do CrewX AntiBot. Cada check tem sua toggle,
+     * entao o usuario pode ligar so o que funciona no servidor dele.
+     */
+    public boolean isCrewXBot(EntityPlayer p) {
+        try {
+            if (p == null || p.isNull()) {
+                return false;
+            }
+            if (p.equals(Minecraft.thePlayer())) {
+                return false;
+            }
+            if (this.neverSwungCheck != null && this.neverSwungCheck.getEffectiveValue()
+                    && p.l() > ((Double) this.minTicks.getValue()).intValue()
+                    && !this.swungSet.contains(p.S())) {
+                return true;
+            }
+            if (this.neverCrittedCheck != null && this.neverCrittedCheck.getEffectiveValue()
+                    && p.l() > ((Double) this.minTicks.getValue())
+                    && !this.crittedSet.contains(p.S())
+                    && this.swungSet.contains(p.S())) {
+                // So conta como bot se ja atacou (swung) mas nunca critou:
+                // evita falso-positivo em jogador parado.
+                return true;
+            }
+            if (this.illegalPitchCheck != null && this.illegalPitchCheck.getEffectiveValue()
+                    && Math.abs(p.V()) > 90.0f) {
+                return true;
+            }
+            if (this.zeroHealthCheck != null && this.zeroHealthCheck.getEffectiveValue()) {
+                EntityLivingBase living = new EntityLivingBase(p.getObject());
+                if (living.w$src$F$15l9epb() <= 0.0f || p.M$src$Z$ff28xj()) {
+                    return true;
+                }
+            }
+            if (this.illegalHealthCheck != null && this.illegalHealthCheck.getEffectiveValue()) {
+                EntityLivingBase living = new EntityLivingBase(p.getObject());
+                float hp = living.w$src$F$15l9epb();
+                float max = living.I$src$F$14vyvep();
+                if (max > 0.0f && hp > max + 0.01f) {
+                    return true;
+                }
+            }
+            if (this.fakeEntityIdCheck != null && this.fakeEntityIdCheck.getEffectiveValue()) {
+                int id = p.S();
+                if (id < 0 || id > 1000000000) {
+                    return true;
+                }
+            }
+            if (this.tooYoungCheck != null && this.tooYoungCheck.getEffectiveValue()
+                    && p.l() < ((Double) this.minTicks.getValue()).intValue()) {
+                // Entidade player com poucos ticks + sem estar na tab list = bot tipico.
+                try {
+                    if (!this.playerUuids.contains(p.X$src$Ljava_util_UUID_$1o5dyg6())) {
+                        return true;
+                    }
+                } catch (Throwable ignored) {
+                }
+            }
+            if (this.duplicateProfileCheck != null && this.duplicateProfileCheck.getEffectiveValue()
+                    && this.hasDuplicateProfile(p)) {
+                return true;
+            }
+            if (this.badNameCheck != null && this.badNameCheck.getEffectiveValue()
+                    && this.hasBadName(p.getName())) {
+                return true;
+            }
+        } catch (Throwable ignored) {
+        }
+        return false;
+    }
+
+    private boolean hasDuplicateProfile(EntityPlayer p) {
+        try {
+            UUID uid = p.c$src$Lgg_vape_wrapper_impl_GameProfile_$ir8937().getUUID();
+            if (uid == null) {
+                return false;
+            }
+            int count = 0;
+            for (Object o : Minecraft.theWorld().X()) {
+                EntityPlayer other = new EntityPlayer(o);
+                if (other.isNull()) {
+                    continue;
+                }
+                try {
+                    UUID otherUid = other.c$src$Lgg_vape_wrapper_impl_GameProfile_$ir8937().getUUID();
+                    if (uid.equals(otherUid) && ++count > 1) {
+                        return true;
+                    }
+                } catch (Throwable ignored) {
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return false;
+    }
+
+    private boolean hasBadName(String name) {
+        try {
+            if (name == null) {
+                return true;
+            }
+            int min = ((Double) this.minNameLen.getValue()).intValue();
+            int max = ((Double) this.maxNameLen.getValue()).intValue();
+            if (name.length() < min || name.length() > max) {
+                return true;
+            }
+            for (int i = 0; i < name.length(); ++i) {
+                char c = name.charAt(i);
+                boolean ok = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z')
+                        || (c >= 'A' && c <= 'Z') || c == '_';
+                if (!ok) {
+                    return true;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return false;
+    }
+
     public ModeValue getTeamColorMode() {
         return this.teamColorMode;
     }
@@ -553,7 +742,9 @@ extends Mod {
     }
 
     public AntiBot() {
-        super("TargetFilter", -28416, Category.UTILITY, "");
+        // Nome de exibicao "AntiBot" (antes "TargetFilter", que escondia o modulo
+        // na busca). Alias legado tratado em ModManager.loadJson/getMod.
+        super("AntiBot", -28416, Category.UTILITY, "Ignora bots e companheiros de time (checks CrewX inclusos)");
         this.teamsByServer = BooleanValue.create(this, "Teams by server", false, "Ignore players on your team designated by the server\n\u00a7cThis is not guaranteed to be accurate, as server teams are assigned by the server");
         this.teamsByColor = BooleanValue.create(this, "Teams by color", false, "Ignore players with the selected name color\n\u00a7cThis is not guaranteed to be accurate - team colors depend on the server implementation");
         this.recolorVisuals = BooleanValue.create(this, "Recolor visuals", false, "Changes colors of visuals(Tracers, ESP) to their according team color");
@@ -610,6 +801,26 @@ extends Mod {
         this.U(this.teamColorMode, ForgeVersion.MC_1_21_11.b());
         this.U(this.detectedTeamColorValue, ForgeVersion.MC_1_21_11.n());
         this.U(this.antiBot, new MinecraftVersionConstraint[0]);
+        // Valores portados do CrewX AntiBot.
+        this.minTicks = NumberValue.create(this, "Min ticks", "#", "", 0.0, 20.0, 200.0, 1.0, "Ticks minimos para considerar never-swung/too-young (CrewX)");
+        this.minNameLen = NumberValue.create(this, "Min name len", "#", "", 1.0, 3.0, 16.0, 1.0, "Tamanho minimo do nick (CrewX bad-name)");
+        this.maxNameLen = NumberValue.create(this, "Max name len", "#", "", 1.0, 16.0, 32.0, 1.0, "Tamanho maximo do nick (CrewX bad-name)");
+        this.neverSwungCheck = BooleanValue.create(this, "Never swung", false, "Bot se nunca deu swing (S0B) apos min-ticks (CrewX)");
+        this.neverCrittedCheck = BooleanValue.create(this, "Never critted", false, "Bot se ataca mas nunca crita (CrewX)");
+        this.illegalPitchCheck = BooleanValue.create(this, "Illegal pitch", true, "Bot se pitch > 90 (CrewX)");
+        this.zeroHealthCheck = BooleanValue.create(this, "Zero health", true, "Bot se HP <= 0 ou morto (CrewX)");
+        this.illegalHealthCheck = BooleanValue.create(this, "Illegal health", true, "Bot se HP > max HP (CrewX)");
+        this.fakeEntityIdCheck = BooleanValue.create(this, "Fake entity id", false, "Bot se entityId < 0 ou > 1bi (CrewX)");
+        this.tooYoungCheck = BooleanValue.create(this, "Too young", false, "Bot se ticks < min e fora da tablist (CrewX)");
+        this.duplicateProfileCheck = BooleanValue.create(this, "Duplicate profile", false, "Bot se UUID repetido no mundo (CrewX)");
+        this.badNameCheck = BooleanValue.create(this, "Bad name", false, "Bot se nick com tamanho/caractere invalido (CrewX)");
+        this.addValue(this.minTicks, this.minNameLen, this.maxNameLen,
+                this.neverSwungCheck, this.neverCrittedCheck, this.illegalPitchCheck,
+                this.zeroHealthCheck, this.illegalHealthCheck, this.fakeEntityIdCheck,
+                this.tooYoungCheck, this.duplicateProfileCheck, this.badNameCheck);
+        this.minTicks.setMaximumFractionDigits(0);
+        this.minNameLen.setMaximumFractionDigits(0);
+        this.maxNameLen.setMaximumFractionDigits(0);
     }
 
     public AntiBotBooleanValue getDetectedTeamColorValue() {

@@ -101,6 +101,14 @@ public class EventBus {
     }
 
     public <T extends IEvent> T post(T event) {
+        try {
+            // AntiScreenShare: durante captura de screenshot (F2), eventos
+            // puramente visuais do cheat nao sao despachados (print limpa).
+            if (gg.vape.module.render.AntiScreenShare.shouldSuppressEvent(event)) {
+                return event;
+            }
+        } catch (Throwable ignored) {
+        }
         EventDispatchTrace dispatchTrace = null;
         if (timingEnabled) {
             dispatchTrace = new EventDispatchTrace(event.getClass());

@@ -121,10 +121,9 @@ public class ProfilesManager {
             return;
         }
         if (jsonObject.entrySet().isEmpty()) {
-            Profile profile = this.initializeBuiltinProfiles();
-            if (profile != null) {
-                this.setActiveProfile(profile);
-            }
+            // Sem presets: o usuario cria os proprios perfis no menu Profiles.
+            // (Antes criava BuiltinProfiles com modulos pre-ligados.)
+            ProfilesSettingsFrame.refreshProfileList();
             return;
         }
         for (Map.Entry entry : jsonObject.entrySet()) {
@@ -141,8 +140,16 @@ public class ProfilesManager {
         ProfilesSettingsFrame.refreshProfileList();
     }
 
-    private static Throwable propagateThrowable(Throwable throwable) {
-        return throwable;
+    /**
+     * Perfil em branco (tudo no padrao, nada ligado) usado quando o codigo
+     * exige um perfil ativo mas a lista esta vazia. Nao aplica preset algum:
+     * o usuario cria os proprios perfis no menu Profiles.
+     */
+    private Profile createBlankProfile() {
+        Profile blank = new Profile("Default", "4.21", true);
+        blank.updateData(new JsonObject());
+        this.addProfile(blank);
+        return blank;
     }
 
     private Profile initializeBuiltinProfiles() {
@@ -263,8 +270,8 @@ public class ProfilesManager {
             if (!this.getProfiles().isEmpty()) {
                 this.setActiveProfile(this.getProfiles().get(0));
             } else {
-                Profile profile = this.initializeBuiltinProfiles();
-                this.setActiveProfile(profile);
+                // Sem presets: cria um perfil em branco em vez dos builtins.
+                this.setActiveProfile(this.createBlankProfile());
             }
         }
         return this.activeProfile;

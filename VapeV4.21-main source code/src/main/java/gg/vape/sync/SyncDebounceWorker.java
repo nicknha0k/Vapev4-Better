@@ -23,9 +23,6 @@ implements Runnable {
     private void processPendingSave() {
         try {
             SleepUtil.sleep(1000L);
-            if (!Vape.INSTANCE.getPublicProfileSettings().autoSave.getEffectiveValue()) {
-                return;
-            }
             if (!ClientSettings.INSTANCE.isMainGuiStack() && !ClientSettings.INSTANCE.inputEnabled) {
                 return;
             }
@@ -33,7 +30,17 @@ implements Runnable {
             if (Vape.INSTANCE.getSyncThread().hasPendingSave()) {
                 SleepUtil.sleep(DEBOUNCE_MILLIS);
                 if (this.lastChangeTime == observedChangeTime) {
-                    Vape.INSTANCE.getSyncThread().requestSave();
+                    if (Vape.INSTANCE.getPublicProfileSettings().autoSave.getEffectiveValue()) {
+                        Vape.INSTANCE.getSyncThread().requestSave();
+                    } else {
+                        // Auto save (online) desligado: ainda assim persiste o .json
+                        // local, senao a config "nunca salva" e a pasta nem e criada.
+                        try {
+                            gg.vape.config.LocalJsonConfigStore.saveAll();
+                        } catch (Throwable ignored) {
+                        }
+                        Vape.INSTANCE.getSyncThread().clearPendingSave();
+                    }
                 }
             }
         }

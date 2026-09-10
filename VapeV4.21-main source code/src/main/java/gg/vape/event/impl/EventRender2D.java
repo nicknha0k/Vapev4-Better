@@ -27,9 +27,13 @@ extends Event {
         displayHeight = Minecraft.h();
         GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
         GuiRenderPrimitives.o(displayWidth, displayHeight);
-        Vape.INSTANCE.getModManager().getMod(ClientSettings.class).renderHudOverlay();
-        EventRender2D eventRender2D = new EventRender2D();
-        eventRender2D.fire();
+        // AntiScreenShare: pula HUD + overlays 2D durante captura (print limpa),
+        // mantendo setup/teardown de GL identicos.
+        if (!gg.vape.module.render.AntiScreenShare.isScreenshotHiding()) {
+            Vape.INSTANCE.getModManager().getMod(ClientSettings.class).renderHudOverlay();
+            EventRender2D eventRender2D = new EventRender2D();
+            eventRender2D.fire();
+        }
         GuiRenderPrimitives.L(displayWidth, displayHeight);
     }
 

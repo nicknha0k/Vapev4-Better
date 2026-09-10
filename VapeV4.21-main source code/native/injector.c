@@ -392,7 +392,7 @@ static int inject_library(DWORD process_id, const wchar_t *dll_path) {
     }
     if (result == 0) {
         fwprintf(stderr, L"LoadLibraryW returned, but the DLL is not mapped. "
-                L"Inspect vape421-native.log for bootstrap failure.\n");
+                L"Re-run as administrator with the game open.\n");
         goto cleanup;
     }
 

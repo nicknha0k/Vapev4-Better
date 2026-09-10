@@ -19,6 +19,7 @@ import gg.vape.utils.EntityArmorValueComparator;
 import gg.vape.utils.EntityDistanceComparator;
 import gg.vape.utils.EntityEquipmentValueComparator;
 import gg.vape.utils.EntityHealthComparator;
+import gg.vape.utils.RayTraceUtil;
 import gg.vape.utils.RotationUtil;
 import gg.vape.utils.render.RenderUtil;
 import gg.vape.utils.render.RenderUtils;
@@ -38,6 +39,8 @@ import gg.vape.wrapper.impl.Item;
 import gg.vape.wrapper.impl.ItemStack;
 import gg.vape.wrapper.impl.KeyBinding;
 import gg.vape.wrapper.impl.Minecraft;
+import gg.vape.wrapper.impl.RayTraceResult;
+import gg.vape.wrapper.impl.RayTraceResult_type;
 import gg.vape.wrapper.impl.Screen;
 import gg.vape.wrapper.impl.TitledScreen;
 import gg.vape.wrapper.impl.WorldClient;
@@ -79,6 +82,18 @@ extends Mod {
     public final BooleanValue autoBlock;
     private boolean autoBlocking = false;
     public List<EntityLivingBase> targets;
+    // Port CrewX KillAura (modo switch/sort/filtros).
+    public final ModeOption singleMode = new ModeOption("Single");
+    public final ModeOption switchMode = new ModeOption("Switch");
+    public final ModeValue auraMode = ModeValue.create(this, "Aura mode", "Single = foca o melhor alvo. Switch = alterna entre alvos apos cada hit (CrewX mode)", (ModeSelection) this.singleMode, this.singleMode, this.switchMode);
+    public final NumberValue switchDelay = NumberValue.create(this, "Switch delay", "#", "ms", 0.0, 150.0, 1000.0, 10.0, "Tempo minimo entre trocas de alvo no modo Switch (CrewX switch-delay)");
+    public final ModeOption hurtTimeMode = new ModeOption("HurtTime");
+    public final BooleanValue throughWalls = BooleanValue.create(this, "Through walls", true, "Permite atacar atraves de paredes (CrewX through-walls). Desligue para exigir linha de visao");
+    public final BooleanValue allowMining = BooleanValue.create(this, "Allow mining", true, "Permite atacar enquanto minera (CrewX allow-mining). Desligue para pausar ao mirar em bloco clicando");
+    public final NumberValue autoBlockRange = NumberValue.create(this, "AutoBlock range", "#.#", "", 0.0, 6.0, 8.0, 0.1, "Alcance para segurar o block com espada (CrewX auto-block-range)");
+    private int switchTick;
+    private long lastSwitchMs;
+    private boolean hitRegistered;
 
     public boolean hasTargets() {
         return this.isEnabled() && !this.targets.isEmpty();
@@ -102,6 +117,7 @@ extends Mod {
 
     @EventHandler(priority=EventPriority.LOW)
     public void onAttackTick(EventPrePlayerTick event) {
+        EntityPlayerSP player = event.getThePlayer();
         if ((Double)this.swingRange.getValue() < (Double)this.attackRange.getValue()) {
             this.swingRange.setValue((Double)this.attackRange.getValue() + 0.1);
         }
@@ -113,7 +129,20 @@ extends Mod {
             this.pauseTicks = 1;
             return;
         }
-        EntityPlayerSP player = event.getThePlayer();
+        // Port CrewX allow-mining: pausar ao mirar em bloco clicando.
+        if (!this.allowMining.getEffectiveValue()) {
+            try {
+                RayTraceResult mouseOver = RayTraceUtil.o();
+                boolean aimingAtBlock = mouseOver != null && mouseOver.isNotNull()
+                        && mouseOver.getTypeOfHit() != null
+                        && mouseOver.getTypeOfHit().equals(RayTraceResult_type.block());
+                if (aimingAtBlock && gg.vape.config.ClientSettings.isAttackButtonDown()) {
+                    this.updateAutoBlock(player, false);
+                    return;
+                }
+            } catch (Throwable ignored) {
+            }
+        }
         if (this.disableOnDeath.getEffectiveValue() && this.handleDeathScreen(player)) {
             return;
         }
@@ -210,8 +239,20 @@ extends Mod {
 
     private void updateAutoBlock(EntityPlayerSP player, boolean mayBlock) {
         KeyBinding useItemKey = Minecraft.gameSettings().b$src$Lgg_vape_wrapper_impl_KeyBinding_$1yi3362();
+        double blockRange = ((Double) this.autoBlockRange.getValue());
+        boolean inBlockRange = false;
+        try {
+            for (EntityLivingBase target : this.targets) {
+                if (this.canAttackTarget(player, target)
+                        && player.getDistanceToEntity(target) <= blockRange) {
+                    inBlockRange = true;
+                    break;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
         if (this.autoBlock.getEffectiveValue().booleanValue() && mayBlock
-                && this.hasTargetInSwingRange(player) && this.isHoldingSword(player)) {
+                && inBlockRange && this.isHoldingSword(player)) {
             if (!this.autoBlocking) {
                 useItemKey.setPressed(true);
                 this.autoBlocking = true;
@@ -262,6 +303,9 @@ extends Mod {
                 Minecraft.S();
             }
         }
+        if (attackedAnyTarget) {
+            this.hitRegistered = true;
+        }
         return attackedAnyTarget;
     }
 
@@ -269,6 +313,9 @@ extends Mod {
     public void onEnable() {
         super.onEnable();
         this.targets.clear();
+        this.switchTick = 0;
+        this.hitRegistered = false;
+        this.lastSwitchMs = 0L;
     }
 
     public void updateTargets(EntityPlayerSP player, WorldClient world) {
@@ -294,10 +341,28 @@ extends Mod {
             this.targets.sort(new EntityEquipmentValueComparator());
         } else if (this.targetMode.getValue() == this.healthMode) {
             this.targets.sort(new EntityHealthComparator());
+        } else if (this.targetMode.getValue() == this.hurtTimeMode) {
+            // Port CrewX sort HurtTime.
+            this.targets.sort((a, b) -> Integer.compare(
+                    a.c$src$I$15a9iwo(), b.c$src$I$15a9iwo()));
         }
         ArrayList<EntityLivingBase> sortedTargets = new ArrayList<>(this.targets);
         this.targets.clear();
         int targetLimit = ((Double)this.maxTargets.getValue()).intValue();
+        // Port CrewX mode Switch: rotaciona o foco entre alvos a cada hit.
+        if (this.auraMode.getValue() == this.switchMode && this.hitRegistered
+                && System.currentTimeMillis() - this.lastSwitchMs >= ((Double) this.switchDelay.getValue()).longValue()
+                && !sortedTargets.isEmpty()) {
+            this.hitRegistered = false;
+            this.lastSwitchMs = System.currentTimeMillis();
+            this.switchTick = (this.switchTick + 1) % sortedTargets.size();
+        }
+        if (this.auraMode.getValue() == this.switchMode && !sortedTargets.isEmpty()) {
+            for (int index = 0; index < targetLimit && index < sortedTargets.size(); ++index) {
+                this.targets.add(sortedTargets.get((this.switchTick + index) % sortedTargets.size()));
+            }
+            return;
+        }
         for (int index = 0; index < targetLimit && index < sortedTargets.size(); ++index) {
             this.targets.add(sortedTargets.get(index));
         }
@@ -362,6 +427,15 @@ extends Mod {
         if (player.getDistanceToEntity(target) >= (Double)this.swingRange.getValue()) {
             return false;
         }
+        // Port CrewX through-walls: sem linha de visao, so ataca se permitido.
+        if (!this.throughWalls.getEffectiveValue()) {
+            try {
+                if (!player.canEntityBeSeen(new Entity(target.getObject()))) {
+                    return false;
+                }
+            } catch (Throwable ignored) {
+            }
+        }
         if (RotationUtil.a(player, target) > ((Double)this.maxAngle.getValue()).intValue() / 2) {
             return false;
         }
@@ -396,9 +470,11 @@ extends Mod {
         this.aimSpeed = NumberValue.create((Object)this, "Aim speed", "#", "", 1.0, 90.0, 180.0, 5.0);
         this.autoBlock = BooleanValue.create(this, "AutoBlock", false, "Hold block with a sword while a target is in range");
         this.targets = new CopyOnWriteArrayList<EntityLivingBase>();
-        this.targetMode = ModeValue.create((Object)this, "Target Mode", "How Killaura should prioritize targets.\nArmor/Threat will default to Distance for non player targets.", (ModeSelection)this.distanceMode, this.distanceMode, this.yawMode, this.armorMode, this.threatMode, this.healthMode);
+        this.targetMode = ModeValue.create((Object)this, "Target Mode", "How Killaura should prioritize targets.\nArmor/Threat will default to Distance for non player targets.", (ModeSelection)this.distanceMode, this.distanceMode, this.yawMode, this.armorMode, this.threatMode, this.healthMode, this.hurtTimeMode);
         this.addValue(this.targetFilter, this.attackRate, this.swingRange, this.attackRange,
-                this.maxAngle, this.maxTargets, this.targetMode, this.aim, this.aimSpeed, this.autoBlock);
+                this.maxAngle, this.maxTargets, this.targetMode, this.aim, this.aimSpeed, this.autoBlock,
+                this.auraMode, this.switchDelay, this.throughWalls, this.allowMining, this.autoBlockRange);
+        this.auraMode.addActiveMode(this.switchDelay, this.switchMode);
         this.aim.addDependentValues(this.aimSpeed);
         this.U(this.perfectSwing, ForgeVersion.MC_1_8_9.N());
         this.showTarget.addDependentValues(this.targetColor, this.attackColor);

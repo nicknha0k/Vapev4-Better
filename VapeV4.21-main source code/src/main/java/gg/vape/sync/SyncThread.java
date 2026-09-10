@@ -36,6 +36,12 @@ public class SyncThread {
     }
 
     public void saveSettings() {
+        // Save local .json primeiro: funciona mesmo sem conta/servidor online.
+        // (O save online abaixo falha em standalone e era o motivo do "nunca salva".)
+        try {
+            gg.vape.config.LocalJsonConfigStore.saveAll();
+        } catch (Throwable ignored) {
+        }
         try {
             SettingsSyncStatusNotification notification = new SettingsSyncStatusNotification();
             if (!this.vape.getPublicProfileSettings().autoSave.getEffectiveValue()) {
@@ -216,18 +222,15 @@ public class SyncThread {
     }
 
     private void loadRemoteConfig() {
+        // Espelha o remoto no .json local quando der certo.
+        boolean remoteOk = false;
+        try {
         ApiResponse<UserDataResponse> response = ApiServices.getInstance().getUserDataApi().getUserData()
                 .exceptionally(error -> null)
                 .join();
-        if (response == null || !response.isSuccessful()) {
-            return;
-        }
+        if (response != null && response.isSuccessful()) {
         UserDataResponse userData = response.getData();
-        assert userData != null;
-        if (userData == null) {
-            return;
-        }
-
+        if (userData != null) {
         HashMap<UUID, JsonObject> profiles = new HashMap<UUID, JsonObject>();
         for (RemoteProfileData remoteProfile : userData.getProfiles().values()) {
             profiles.put(remoteProfile.getProfileId(), remoteProfile.toJson());
@@ -243,9 +246,35 @@ public class SyncThread {
             config.add("otherData", userData.getOtherData());
         }
         this.vape.loadConfigData(config, true);
+        remoteOk = true;
+        try {
+            gg.vape.config.LocalJsonConfigStore.writePayload(config);
+        } catch (Throwable ignored) {
+        }
+        }
+        }
+        } catch (Throwable ignored) {
+        }
+        if (!remoteOk) {
+            // Sem servidor: cai para o .json local.
+            this.loadStandaloneConfig();
+        }
     }
 
     private void loadStandaloneConfig() {
+        // 1) Tenta o .json local primeiro (é o que o usuário edita/espera).
+        try {
+            JsonObject local = gg.vape.config.LocalJsonConfigStore.loadLocalConfig();
+            if (local != null && !local.entrySet().isEmpty()) {
+                boolean useNewKey = local.has("otherData");
+                this.vape.loadConfigData(local, useNewKey);
+                for (Profile profile : this.vape.getProfilesManager().getProfiles()) {
+                    profile.setDirty(true);
+                }
+                return;
+            }
+        } catch (Throwable ignored) {
+        }
         String encodedSettings = NativeBridge.gp("all");
         String decodedSettings = encodedSettings == null
                 ? ""

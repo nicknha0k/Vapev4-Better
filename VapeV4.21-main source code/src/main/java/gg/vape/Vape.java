@@ -424,6 +424,15 @@ public class Vape {
         this.syncThread.clearPendingSave();
         this.getFontSelector().N((FontOption)Vape.INSTANCE.getPublicProfileSettings().language.getValue());
         this.syncThread.start();
+        // Garante que a pasta/arquivo de config exista desde a primeira execucao:
+        // %APPDATA%\Vape421\vape421-config.json. Sem isso, se o usuario nunca
+        // disparasse um save, a pasta "nao existia".
+        try {
+            if (!gg.vape.config.LocalJsonConfigStore.hasLocalConfig()) {
+                gg.vape.config.LocalJsonConfigStore.saveAll();
+            }
+        } catch (Throwable ignored) {
+        }
         this.traceStep(28);
         NativeBridge.dc();
         this.registerEventListeners();

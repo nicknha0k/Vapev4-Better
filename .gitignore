@@ -1,0 +1,13 @@
+# build outputs (regenerable)
+build/
+.gradle/
+# native intermediates
+*.obj
+*.pdb
+*.ilk
+*.exp
+*.lib
+# debug logs (never commit)
+*.log
+# personal local config (never commit)
+vape421-config.json

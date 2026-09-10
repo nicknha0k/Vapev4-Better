@@ -1,5 +1,6 @@
 // probe.c — DLL de diagnóstico: lista classes carregadas e membros.
-// Uso: Vape421Injector.exe <pid> probe.dll  →  gera probe.log ao lado da DLL.
+// Sem escrita em arquivo: diagnostico vai so para o debugger (OutputDebugStringA).
+// O unico .txt mantido e o tutorial (Vape/LEIA-ME.txt).
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -11,22 +12,11 @@
 
 static HMODULE g_mod = NULL;
 
-static void log_path(wchar_t *out, size_t cap) {
-    wchar_t *sep;
-    GetModuleFileNameW(g_mod, out, (DWORD)cap);
-    sep = wcsrchr(out, L'\\');
-    if (sep) wcscpy(sep + 1, L"probe.log");
-}
-
 static void log_text(const char *text) {
-    wchar_t path[MAX_PATH];
-    FILE *f = NULL;
-    log_path(path, MAX_PATH);
-    if (_wfopen_s(&f, path, L"a") == 0 && f) {
-        fputs(text, f);
-        fputc('\n', f);
-        fclose(f);
-    }
+    /* Arquivo probe.log desativado: manter apenas o tutorial (.txt).
+       Diagnostico vai so para o debugger, sem criar arquivo em disco. */
+    (void)text;
+    OutputDebugStringA(text);
 }
 
 static void log_members(JNIEnv *env, jclass target, const char *sig) {

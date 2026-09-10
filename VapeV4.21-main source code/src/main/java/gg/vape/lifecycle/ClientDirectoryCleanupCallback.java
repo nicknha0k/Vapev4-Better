@@ -15,6 +15,9 @@ implements ClientLifecycleCallback {
         if (clientDirectory.exists()) {
             for (File child : clientDirectory.listFiles()) {
                 if (child.getName().equals("cache")) continue;
+                // Preserva configs locais em .json (ex.: vape421-config.json).
+                // Sem isso, o cleanup apagava o save local e parecia que "nunca salva".
+                if (child.isFile() && child.getName().toLowerCase().endsWith(".json")) continue;
                 child.delete();
             }
         }

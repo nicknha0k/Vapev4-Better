@@ -49,6 +49,8 @@ import gg.vape.module.combat.velocity.VelocityPacketReceiveMode;
 import gg.vape.module.combat.HitSelect;
 import gg.vape.module.combat.silentaura.SilentAuraClicker;
 import gg.vape.module.render.BedPlates;
+import gg.vape.module.render.Cape;
+import gg.vape.module.render.AntiScreenShare;
 import gg.vape.module.world.MurderFinder;
 import gg.vape.module.none.ClientSettings;
 import gg.vape.module.none.MouseDelayFix;
@@ -240,6 +242,8 @@ implements EventListener {
         this.registerModules(Stream.of(new AutoFish(), new BedBreaker(), new BlockIn(), new FakeLag()), ModManager::addMinecraft1710Constraint);
         this.registerModules(Stream.of(new BedPlates()), ModManager::addBedPlatesVersionConstraints);
         this.registerModules(Stream.of(new AntiBot()));
+        this.registerModules(Stream.of(new Cape()));
+        this.registerModules(Stream.of(new AntiScreenShare()));
         this.registerModules(Stream.of(new Triggerbot(), new HitSwap(), new AutoAnchor(), new WindCharge(), new CrystalAura(), new AutoTotem()), ModManager::addMinecraft1214Constraint);
         this.registerModules(Stream.of(new NoFall(), new NoSlowdown(), new Speed(), new BlockHit(), new Timer()), ModManager::addModernMinecraftConstraint);
         this.registerTextGuiSettings();
@@ -273,6 +277,13 @@ implements EventListener {
     public void applyProfileModuleStates(Profile profile) {
         this.suppressStateNotifications = true;
         JsonObject enabledStates = profile.getEnabledModuleStates();
+        // Migracao: configs antigas guardavam "TargetFilter" (nome antigo do AntiBot).
+        if (!enabledStates.has("AntiBot") && enabledStates.has("TargetFilter")) {
+            try {
+                enabledStates.add("AntiBot", enabledStates.get("TargetFilter"));
+            } catch (Exception ignored) {
+            }
+        }
         int enabledCount = 0;
         for (Mod mod : this.collectMods()) {
             if (mod instanceof HudModule || mod.getCategory().equals(Category.NONE)) continue;
@@ -537,10 +548,21 @@ implements EventListener {
 
     public Mod getMod(String name) {
         for (Map.Entry<Class<? extends Mod>, Mod> entry : this.activeModulesByType.entrySet()) {
-            if (!((Mod)entry.getValue()).getName().equals(name)) continue;
+            if (!matchesModuleName((Mod)entry.getValue(), name)) continue;
             return (Mod)entry.getValue();
         }
         return null;
+    }
+
+    /** Alias legado: o modulo AntiBot se chamava "TargetFilter" (invisivel na busca). */
+    public static boolean matchesModuleName(Mod mod, String name) {
+        if (mod == null || name == null) {
+            return false;
+        }
+        if (mod.getName().equalsIgnoreCase(name)) {
+            return true;
+        }
+        return mod instanceof AntiBot && name.equalsIgnoreCase("TargetFilter");
     }
 
     private static void addMinecraft1710Constraint(ModRegistrationBuilder modRegistrationBuilder) {
@@ -550,7 +572,9 @@ implements EventListener {
     public List<Mod> getProfileModules(JsonObject enabledModuleStates) {
         ArrayList<Mod> modules = new ArrayList<Mod>();
         for (Mod mod : this.collectMods()) {
-            if (!enabledModuleStates.has(mod.getName()) || !mod.isVisible() || mod.getCategory() == Category.NONE) continue;
+            boolean listed = enabledModuleStates.has(mod.getName())
+                    || (mod instanceof AntiBot && enabledModuleStates.has("TargetFilter"));
+            if (!listed || !mod.isVisible() || mod.getCategory() == Category.NONE) continue;
             modules.add(mod);
         }
         return modules;
@@ -579,7 +603,15 @@ implements EventListener {
             String moduleName = serializedModule.get("name").getAsString();
             for (Mod mod : this.getTopLevelModules()) {
                 try {
-                    if (!mod.getName().equalsIgnoreCase(moduleName)) continue;
+                    if (!matchesModuleName(mod, moduleName)) continue;
+                    // Alias legado: reescreve "TargetFilter" -> "AntiBot" para o
+                    // Mod.loadJson (que confere o nome) aceitar a config antiga.
+                    if (!mod.getName().equalsIgnoreCase(moduleName)) {
+                        try {
+                            serializedModule.addProperty("name", mod.getName());
+                        } catch (Exception ignored) {
+                        }
+                    }
                     mod.loadJson(serializedModule);
                 }
                 catch (Exception exception) {

@@ -128,9 +128,12 @@ implements Comparable<Profile> {
         }
         object.addProperty("name", this.name.length() > 48 ? this.name.substring(0, 47) : this.name);
         object.addProperty(useRemoteFormat ? "vapeVersion" : "version", this.clientVersion);
-        this.data.add("keybinds", (JsonElement)this.serializeBoundInputs());
-        this.data.addProperty("sortOrder", (Number)this.getCurrentSortIndex());
-        object.add("data", (JsonElement)this.data);
+        // Guarda contra data==null (perfil criado nesta sessao e nunca ativado):
+        // sem isso o NPE aqui descartava o save inteiro (online e local).
+        JsonObject data = this.data != null ? this.data : new JsonObject();
+        data.add("keybinds", (JsonElement)this.serializeBoundInputs());
+        data.addProperty("sortOrder", (Number)this.getCurrentSortIndex());
+        object.add("data", (JsonElement)data);
         object.addProperty("is_public", Boolean.valueOf(this.publicProfileFlag));
         object.addProperty("updated", (Number)this.updatedAt);
         if (this.originalUuid != null) {
