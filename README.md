@@ -1,6 +1,6 @@
 # VapeV4-Better
 
-#ENGLISH
+# ENGLISH
 
 VapeV4 is open source, with a working Click GUI and saved settings.
 
