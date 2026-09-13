@@ -1,6 +1,33 @@
 # VapeV4-Better
 
-Vape V4 open source, com Click GUI funcionando e configurações salvando.
+#ENGLISH
+
+VapeV4 is open source, with a working Click GUI and saved settings.
+
+## How to use
+
+1. Open Minecraft 1.8.9 (Lunar or Forge).
+
+2. Double-click on `Vape/Vape421Injector.exe`, choose `javaw.exe`, and press Enter.
+
+3. In the game, press RShift to open the menu.
+
+Details in `Vape/README.txt`.
+
+## Settings
+
+Saved automatically in `%APPDATA%\Vape421\vape421-config.json` seconds after any change (module on/off, value, bind, profile) and loaded automatically upon injection. A backup (`vape421-config.bak.json`) is kept in the same folder. Works on any Windows 10/11 x64 PC, regardless of the machine where it was compiled.
+
+## Compiling from scratch
+
+- Windows 10/11 x64
+- JDK 21 (to run Gradle 8.8) + JDK 17 (payload toolchain) + JDK 8 (native JNI headers)
+- Visual Studio 2022 or 2026 with C++ x64 + CMake
+- Inside `VapeV4.21-main source code`, run `.\gradlew.bat prepareInjectionBundle`
+- The bundle will appear in `build/injection/` (`Vape421Native.dll` + `Vape421Injector.exe`)
+
+# PORTUGUESE (BRASIL)
+VapeV4 open source, com Click GUI funcionando e configurações salvando.
 
 ## Como usar
 
