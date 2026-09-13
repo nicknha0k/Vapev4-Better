@@ -12,7 +12,7 @@ VapeV4 is open source, with a working Click GUI and saved settings.
 
 3. In the game, press RShift to open the menu.
 
-Details in `Vape/README.txt`.
+Details in `Vape/LEIA-ME.txt` (Portuguese).
 
 ## Settings
 
