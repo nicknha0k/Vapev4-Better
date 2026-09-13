@@ -126,18 +126,56 @@ public class ProfilesManager {
             ProfilesSettingsFrame.refreshProfileList();
             return;
         }
+        Profile firstLoaded = null;
+        int loadedCount = 0;
         for (Map.Entry entry : jsonObject.entrySet()) {
             JsonObject jsonObject2 = ((JsonElement)entry.getValue()).getAsJsonObject();
             Profile profile = new Profile("", "", true).loadJson(jsonObject2);
             this.addProfile(profile);
+            if (firstLoaded == null) {
+                firstLoaded = profile;
+            }
+            loadedCount++;
         }
+        gg.vape.config.LocalJsonConfigStore.debugLog("loadJson: " + loadedCount + " perfis no arquivo, ativo=" + (this.activeProfile == null ? "null" : this.activeProfile.getName()));
         try {
             this.profiles.sort(ProfilesManager::compareProfileSortOrder);
         }
         catch (Throwable throwable) {
             // empty catch block
         }
+        // Se um perfil em branco foi auto-criado antes do load (init), ele e
+        // um placeholder vazio: descarta para nao roubar o lugar do perfil real
+        // salvo, que seria sobrescrito pelo save seguinte ("config zerada").
+        if (this.activeProfile != null && isUnloadedBlankPlaceholder(this.activeProfile)) {
+            gg.vape.config.LocalJsonConfigStore.debugLog("loadJson: descartando placeholder em branco");
+            this.profiles.remove(this.activeProfile);
+            this.activeProfile = null;
+        }
+        // Ativa o perfil carregado de imediato para aplicar modulos/valores na
+        // hora. Sem isso, nada era aplicado ate o usuario trocar de perfil.
+        if (this.activeProfile == null && firstLoaded != null) {
+            gg.vape.config.LocalJsonConfigStore.debugLog("loadJson: ativando perfil " + firstLoaded.getName());
+            this.setActiveProfile(firstLoaded);
+            gg.vape.config.LocalJsonConfigStore.debugLog("loadJson: perfil ativo aplicado");
+        }
         ProfilesSettingsFrame.refreshProfileList();
+    }
+
+    /**
+     * Placeholder em branco nunca passou pelo save/load: o dado dele nao tem
+     * as chaves que Profile.toJson sempre grava ("modules", "values", ...).
+     */
+    private static boolean isUnloadedBlankPlaceholder(Profile profile) {
+        if (profile == null) {
+            return false;
+        }
+        try {
+            JsonObject data = profile.getData();
+            return data == null || !data.has("modules");
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 
     /**
@@ -226,6 +264,20 @@ public class ProfilesManager {
     }
 
     public void setActiveProfile(Profile profile) {
+        try {
+            String from = this.activeProfile == null ? "null" : this.activeProfile.getName();
+            String to = profile == null ? "null" : profile.getName();
+            String caller = "?";
+            try {
+                StackTraceElement[] st = Thread.currentThread().getStackTrace();
+                if (st.length > 3) {
+                    caller = st[3].getClassName() + "#" + st[3].getMethodName();
+                }
+            } catch (Throwable ignored) {
+            }
+            gg.vape.config.LocalJsonConfigStore.debugLog("setActiveProfile: " + from + " -> " + to + " por " + caller);
+        } catch (Throwable ignored) {
+        }
         if (this.activeProfile != null && this.activeProfile.equals(profile)) {
             return;
         }

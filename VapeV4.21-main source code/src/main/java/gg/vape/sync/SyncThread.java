@@ -210,6 +210,22 @@ public class SyncThread {
     }
 
     public void loadConfig() {
+        // Depois que uma configuracao local existe, ela e a fonte de verdade.
+        // Antes, contas com profiles habilitados sempre baixavam o estado remoto
+        // durante a inicializacao e sobrescreviam as alteracoes recem-gravadas
+        // em %APPDATA%\\Vape421. O remoto continua sendo usado no primeiro uso,
+        // quando ainda nao ha um arquivo local para carregar.
+        try {
+            if (gg.vape.config.LocalJsonConfigStore.hasLocalConfig()) {
+                this.loadStandaloneConfig();
+                gg.vape.config.LocalJsonConfigStore.debugLog("loadConfig: concluido (via local)");
+                gg.vape.Vape.markConfigLoadComplete();
+                return;
+            }
+        }
+        catch (Throwable ignored) {
+            // Se a verificacao local falhar, mantem o caminho original abaixo.
+        }
         try {
             if (this.vape.getAccountInfo().hasProfilesEnabled()) {
                 this.loadRemoteConfig();
@@ -219,6 +235,8 @@ public class SyncThread {
         }
         catch (Throwable ignored) {
         }
+        gg.vape.config.LocalJsonConfigStore.debugLog("loadConfig: concluido");
+        gg.vape.Vape.markConfigLoadComplete();
     }
 
     private void loadRemoteConfig() {
@@ -267,14 +285,19 @@ public class SyncThread {
             JsonObject local = gg.vape.config.LocalJsonConfigStore.loadLocalConfig();
             if (local != null && !local.entrySet().isEmpty()) {
                 boolean useNewKey = local.has("otherData");
+                gg.vape.config.LocalJsonConfigStore.debugLog("loadStandalone: aplicando .json local");
                 this.vape.loadConfigData(local, useNewKey);
+                gg.vape.config.LocalJsonConfigStore.debugLog("loadStandalone: .json local aplicado");
                 for (Profile profile : this.vape.getProfilesManager().getProfiles()) {
                     profile.setDirty(true);
                 }
                 return;
             }
-        } catch (Throwable ignored) {
+            gg.vape.config.LocalJsonConfigStore.debugLog("loadStandalone: .json local vazio/ausente");
+        } catch (Throwable t) {
+            gg.vape.config.LocalJsonConfigStore.debugLog("loadStandalone: FALHOU no .json local: " + t);
         }
+        gg.vape.config.LocalJsonConfigStore.debugLog("loadStandalone: caindo para gp(all) nativo");
         String encodedSettings = NativeBridge.gp("all");
         String decodedSettings = encodedSettings == null
                 ? ""

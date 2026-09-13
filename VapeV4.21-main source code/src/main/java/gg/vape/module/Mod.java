@@ -153,6 +153,16 @@ EventListener {
             if ((object = ConfigJsonUtils.getBoolean(jsonObject, "visible")) != null) {
                 this.visible = (Boolean)object;
             }
+            // Favoritos (estrela) + HUD favorites: persistidos por modulo.
+            // Antes so a TextGUI list (ModuleProfileMetadataCodec) salvava,
+            // entao favoritos do HUD e estrelas fora da lista se perdiam.
+            Boolean fav = ConfigJsonUtils.getBoolean(jsonObject, "favorited");
+            if (fav == null) {
+                fav = ConfigJsonUtils.getBoolean(jsonObject, "favorite");
+            }
+            if (fav != null) {
+                this.favorited = fav;
+            }
         }
     }
 
@@ -198,6 +208,10 @@ EventListener {
         if (this.visible != this.defaultVisible) {
             jsonObject.addProperty("visible", Boolean.valueOf(this.visible));
         }
+        // Persiste estrela de favorito por modulo (cobre HUD + modulos fora da TextGUI list).
+        if (this.favorited) {
+            jsonObject.addProperty("favorited", Boolean.TRUE);
+        }
         if (jsonObject.entrySet().size() == 1) {
             return null;
         }
@@ -236,6 +250,22 @@ EventListener {
     }
 
     public void setFavorite(boolean bl) {
+        if (this.favorited == bl) {
+            return;
+        }
+        this.favorited = bl;
+        // HUD togglava favorito via setFavorite direto (sem passar pelo Codec)
+        // e nunca salvava. Dispara o save local imediato aqui tambem.
+        try {
+            if (Vape.INSTANCE != null) {
+                Vape.INSTANCE.saveAndStop();
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** Usado durante load de config: nao dispara save. */
+    public void setFavoriteSilent(boolean bl) {
         this.favorited = bl;
     }
 

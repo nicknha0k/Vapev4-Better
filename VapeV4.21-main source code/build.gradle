@@ -263,7 +263,7 @@ tasks.register('configureNative', Exec) {
         commandLine 'cmake',
                 '-S', nativeSourceDirectory.absolutePath,
                 '-B', nativeBuildDirectory.get().asFile.absolutePath,
-                '-G', 'Visual Studio 17 2022',
+                '-G', (project.findProperty('nativeGenerator') ?: 'Visual Studio 17 2022'),
                 '-A', 'x64',
                 "-DVAPE421_JAVA_HOME=${nativeJavaHome.get()}",
                 "-DVAPE421_PRODUCT_JAR=${recoveredProductJar.get().asFile.absolutePath}"

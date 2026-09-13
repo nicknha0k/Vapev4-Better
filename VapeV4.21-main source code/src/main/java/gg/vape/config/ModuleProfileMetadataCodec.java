@@ -54,6 +54,15 @@ public class ModuleProfileMetadataCodec {
 
     public void loadJson(JsonObject object) {
         if (object.has("modules")) {
+            // Limpa favoritos obsoletos da lista anterior (ex: defaults do construtor
+            // que o usuario desfavoritou). So mexe nos que estavam na lista,
+            // para nao apagar favoritos do HUD (que nao passam pelo Codec).
+            try {
+                for (Mod previouslySelected : new java.util.ArrayList<Mod>(this.selectedModules)) {
+                    previouslySelected.setFavoriteSilent(false);
+                }
+            } catch (Throwable ignored) {
+            }
             this.selectedModules.clear();
             JsonArray modulesJson = object.get("modules").getAsJsonArray();
             for (JsonElement moduleElement : modulesJson) {
@@ -70,7 +79,7 @@ public class ModuleProfileMetadataCodec {
             return;
         }
         this.selectedModules.add(module);
-        module.setFavorite(true);
+        module.setFavoriteSilent(true);
     }
 
     public ModuleProfileMetadataCodec() {

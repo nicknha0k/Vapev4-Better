@@ -165,9 +165,11 @@ public class Vape {
         }
         if ((profilesElement = ConfigJsonUtils.getJsonObject(configRoot, "profiles")) != null) {
             profilesData = configRoot.get("profiles").getAsJsonObject();
+            gg.vape.config.LocalJsonConfigStore.debugLog("loadConfigData: profiles com " + profilesData.entrySet().size() + " entradas");
             this.profilesManager.loadJson(profilesData);
         } else {
             Vape.debugLog("profilesData is NULL!");
+            gg.vape.config.LocalJsonConfigStore.debugLog("loadConfigData: profiles AUSENTE no json!");
         }
         JsonArray otherData = ConfigJsonUtils.getJsonArray(configRoot, useNewOtherDataKey ? "otherData" : "otherdata");
         if (otherData != null && otherData.size() > 0) {
@@ -433,6 +435,18 @@ public class Vape {
             }
         } catch (Throwable ignored) {
         }
+        // Save no shutdown (estilo CrewX: nunca perder config ao fechar o jogo).
+        // Cobre: fechar via X, crash com shutdown hook, /quit. O save e sincrono
+        // e barato (<50ms), entao e seguro no hook.
+        try {
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                try {
+                    gg.vape.config.LocalJsonConfigStore.saveAllSyncQuiet();
+                } catch (Throwable ignored) {
+                }
+            }, "Vape421-shutdown-save"));
+        } catch (Throwable ignored) {
+        }
         this.traceStep(28);
         NativeBridge.dc();
         this.registerEventListeners();
@@ -529,11 +543,35 @@ public class Vape {
         return this.pendingTickAction;
     }
 
+    private static volatile boolean configLoadComplete = false;
+
+    public static void markConfigLoadComplete() {
+        configLoadComplete = true;
+    }
+
+    public static boolean isConfigLoadComplete() {
+        return configLoadComplete;
+    }
+
     public void saveAndStop() {
         Profile activeProfile;
         this.syncThread.markDirty();
         if (this.profilesManager != null && (activeProfile = this.profilesManager.getActiveProfileOrNull()) != null) {
             activeProfile.setDirty(true);
+        }
+        // Saves disparados durante o init (antes do load) capturam a lista de
+        // perfis ainda vazia e apagariam o arquivo antes do load ler. Segura o
+        // save local ate o load terminar; o shutdown hook (saveAllSyncQuiet) e
+        // o save de primeira execucao nao passam por aqui.
+        if (!configLoadComplete) {
+            return;
+        }
+        // Save local imediato (estilo CrewX: salva na hora, sem esperar debounce).
+        // O debounce continua existindo para o save online, mas o .json local
+        // nao pode depender dele: se o jogo fechar antes dos 3s, perdia tudo.
+        try {
+            gg.vape.config.LocalJsonConfigStore.saveAllAsync();
+        } catch (Throwable ignored) {
         }
     }
 

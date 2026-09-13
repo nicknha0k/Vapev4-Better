@@ -130,6 +130,7 @@ extends Mod {
     private BlockPathPlanner pathPlanner;
     private final BooleanValue showBlockCount;
     private final BooleanValue returnToLastSlot;
+    private final BooleanValue switchToBlocks;
     private boolean inputBack;
     private int returnDelayTicks;
     private Boolean pendingInputForward;
@@ -369,6 +370,7 @@ extends Mod {
         this.limitBlocks = BooleanValue.create(this, "Limit blocks", false, "Only clutch if it requires fewer than the max number of blocks");
         this.maxBlocks = NumberValue.create(this, "Max blocks", "#", "", 1.0, 5.0, 10.0, 1.0, "Maximum blocks allowed for a clutch");
         this.returnToLastSlot = BooleanValue.create(this, "Return to last slot", true, "Selects previously selected slot when clutch is completed");
+        this.switchToBlocks = BooleanValue.create(this, "Switch to blocks", true, "Automatically switches to a block slot when clutch activates\nso it works even while holding a sword");
         this.returnDelay = RandomValue.createWithDescription(this, "Return delay", "#", "tick", 0.0, 3.0, 6.0, 10.0, 1.0, "Delay before returning to the last slot");
         this.resetAngle = BooleanValue.create(this, "Reset angle", true, "Looks back to your original angle after clutching\nNOTE: Only affects non silent aim.");
         this.resetAngleDelay = RandomValue.createWithDescription(this, "Reset angle delay", "#", "tick", 0.0, 3.0, 6.0, 10.0, 1.0, "Delay before resetting your angles after clutching");
@@ -394,7 +396,7 @@ extends Mod {
         this.limitBlocks.addDependentValues(this.maxBlocks);
         this.silentAim.getDisabledCondition().applyTo(this.resetAngle);
         this.resetAngle.setOverrideColor(ThemeColors.J.r);
-        this.addValue(this.onVoid, this.onLethalFall, this.onMoreThanXBlocks, this.blocksThreshold, this.speed, this.silentAim, this.resetAngle, this.resetAngleDelay, this.returnToLastSlot, this.returnDelay, this.clutchMoveDelay, this.failDelay, this.allowStaircaseUp, this.showBlockCount, this.limitBlocks, this.maxBlocks, this.blacklist, this.blacklistBlocks, this.heldWhitelist, this.whitelistBlocks);
+        this.addValue(this.onVoid, this.onLethalFall, this.onMoreThanXBlocks, this.blocksThreshold, this.speed, this.silentAim, this.resetAngle, this.resetAngleDelay, this.returnToLastSlot, this.returnDelay, this.switchToBlocks, this.clutchMoveDelay, this.failDelay, this.allowStaircaseUp, this.showBlockCount, this.limitBlocks, this.maxBlocks, this.blacklist, this.blacklistBlocks, this.heldWhitelist, this.whitelistBlocks);
         this.rotationClaim.setPriority(this, 50);
     }
 
@@ -942,6 +944,20 @@ extends Mod {
         }
         this.selectHotbarSlot(slot);
         return true;
+    }
+
+    private void switchToBlockSlotOnActivate(EntityPlayerSP localPlayer) {
+        if (!this.switchToBlocks.getEffectiveValue().booleanValue()) {
+            return;
+        }
+        if (this.heldWhitelist.getEffectiveValue().booleanValue()) {
+            return;
+        }
+        ItemStack heldStack = localPlayer.B$src$Lgg_vape_wrapper_impl_ItemStack_$impdvt();
+        if (heldStack.isNotNull() && this.isValidBlockItem(heldStack)) {
+            return;
+        }
+        this.selectBlockSlot(localPlayer);
     }
 
     @EventHandler
@@ -1658,6 +1674,7 @@ extends Mod {
                             this.moveDelayTicks = 0;
                             this.returnDelayTicks = 0;
                             this.clutchPath = clutchPath;
+                            this.switchToBlockSlotOnActivate(localPlayer);
                             this.prevRightClickHeld = jumpPressed;
                             gameSettings.F().e();
                             if (!this.silentAim.getEffectiveValue().booleanValue()) {
@@ -1839,6 +1856,7 @@ extends Mod {
                         this.moveDelayTicks = 0;
                         this.returnDelayTicks = 0;
                         this.clutchPath = clutchPath;
+                        this.switchToBlockSlotOnActivate(localPlayer);
                         this.prevRightClickHeld = jumpPressed;
                         gameSettings.F().e();
                         if (!this.silentAim.getEffectiveValue().booleanValue()) {
