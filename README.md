@@ -26,7 +26,7 @@ Saved automatically in `%APPDATA%\Vape421\vape421-config.json` seconds after any
 - Inside `VapeV4.21-main source code`, run `.\gradlew.bat prepareInjectionBundle`
 - The bundle will appear in `build/injection/` (`Vape421Native.dll` + `Vape421Injector.exe`)
 
-- How I support the OpenSource community: I authorize you to copy, modify, and redistribute the Vapev4-Better code/UI in your Nexyre project, including in closed/obfuscated builds (I am not responsible for lawsuits or copyright infringement by third parties).
+- How I support the OpenSource community: I authorize you to copy, modify, and redistribute the Vapev4-Better code/UI in your project, including in closed/obfuscated builds (I am not responsible for lawsuits or copyright infringement by third parties).
 
 # PORTUGUESE (BRASIL)
 VapeV4 open source, com Click GUI funcionando e configurações salvando.
@@ -55,4 +55,4 @@ máquina onde foi compilado.
 - Dentro de `VapeV4.21-main source code`, rode `.\gradlew.bat prepareInjectionBundle`
 - O bundle sai em `build/injection/` (`Vape421Native.dll` + `Vape421Injector.exe`)
 
-- como eu apoio a comunidade OpenSouce: Eu autorizo você a copiar, modificar e redistribuir o código/UI do Vapev4-Better no seu projeto Nexyre, inclusive em builds fechadas/ofuscadas (não me reponsabilizo por processos ou quebra de direitos autorais de terceiros)
+- como eu apoio a comunidade OpenSouce: Eu autorizo você a copiar, modificar e redistribuir o código/UI do Vapev4-Better no seu projeto, inclusive em builds fechadas/ofuscadas (não me reponsabilizo por processos ou quebra de direitos autorais de terceiros)
