@@ -20,6 +20,7 @@ import gg.vape.utils.render.ImageRenderer;
 import gg.vape.utils.render.RenderUtils;
 import gg.vape.value.ListValueSuggestionProvider;
 import java.awt.Color;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -48,6 +49,8 @@ implements FocusableComponent {
     @Nullable
     private Color backgroundColor;
     private String text = "";
+    private final ArrayDeque<String> undoHistory = new ArrayDeque<String>();
+    private boolean applyingUndo = false;
     @Nullable
     private Consumer<String> suggestionConsumer;
     private static String[] legacyStrings;
@@ -102,6 +105,20 @@ implements FocusableComponent {
         this.setText("");
     }
 
+    private void undo() {
+        if (this.undoHistory.isEmpty()) {
+            return;
+        }
+        this.applyingUndo = true;
+        try {
+            this.setText(this.undoHistory.removeLast());
+        } finally {
+            this.applyingUndo = false;
+        }
+        this.cursorPosition = this.getText().length();
+        this.keepCursorVisible();
+    }
+
     private void handleSubmitAction() {
         this.submit();
     }
@@ -139,12 +156,41 @@ implements FocusableComponent {
             return;
         }
         if (typedCharacter == '\u0016' && KeyboardInput.isKeyDown(162)) {
-            this.setText(ClipboardUtil.getText());
-            this.cursorPosition = this.getText().length();
+            String clipboard = ClipboardUtil.getText();
+            if (clipboard == null) {
+                clipboard = "";
+            }
+            clipboard = clipboard.replace("\r", "").replace("\n", " ");
+            if (clipboard.isEmpty()) {
+                return;
+            }
+            int caret = MathUtil.clamp(this.cursorPosition, 0, this.getText().length());
+            if (this.maxLength != -1) {
+                int room = this.maxLength - this.getText().length();
+                if (room <= 0) {
+                    return;
+                }
+                if (clipboard.length() > room) {
+                    clipboard = clipboard.substring(0, room);
+                }
+            }
+            this.cursorPosition = caret;
+            this.setText(this.getText().substring(0, caret) + clipboard + this.getText().substring(caret));
             return;
         }
         if (typedCharacter == '\u0003' && KeyboardInput.isKeyDown(162)) {
             ClipboardUtil.setText(this.getText());
+            return;
+        }
+        if (typedCharacter == '\u0018' && KeyboardInput.isKeyDown(162)) {
+            ClipboardUtil.setText(this.getText());
+            this.cursorPosition = MathUtil.clamp(this.cursorPosition, 0, this.getText().length());
+            this.setText("");
+            this.cursorPosition = 0;
+            return;
+        }
+        if (typedCharacter == '\u001A' && KeyboardInput.isKeyDown(162)) {
+            this.undo();
             return;
         }
         if (keyCode == 37 && this.cursorPosition > 0) {
@@ -603,6 +649,13 @@ implements FocusableComponent {
         ListValueSuggestionProvider suggestionProvider;
         if (this.numericOnly && !text.isEmpty() && !text.matches("^\\d+(\\.\\d*)?$|^\\.\\d+$")) {
             return;
+        }
+        if (!this.applyingUndo && text != null && this.text != null && !this.text.equals(text)
+                && (this.undoHistory.isEmpty() || !this.undoHistory.getLast().equals(this.text))) {
+            this.undoHistory.addLast(this.text);
+            while (this.undoHistory.size() > 50) {
+                this.undoHistory.removeFirst();
+            }
         }
         int lengthDelta = text.length() - this.text.length();
         this.cursorPosition += lengthDelta;

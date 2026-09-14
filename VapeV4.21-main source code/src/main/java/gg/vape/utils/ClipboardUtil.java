@@ -42,14 +42,21 @@ public class ClipboardUtil {
                 case 1: {
                     Transferable transferable = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
                     if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-                        return (String)transferable.getTransferData(DataFlavor.stringFlavor);
+                        String text = (String)transferable.getTransferData(DataFlavor.stringFlavor);
+                        if (text != null) {
+                            return text;
+                        }
                     }
+                    // Sem texto no clipboard do sistema: tenta o do jogo.
                 }
                 case 2: {
-                    Minecraft.r().F();
+                    String gameText = Minecraft.r().F();
+                    return gameText != null ? gameText : "";
+                }
+                default: {
+                    return "";
                 }
             }
-            return "";
         }
         catch (Exception exception) {
             Vape.logThrowable(exception);
