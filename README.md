@@ -1,4 +1,8 @@
+[![Netlify Status](https://api.netlify.com/api/v1/badges/60580569-48b7-4e3c-aee7-d5d753ae1679/deploy-status)](https://app.netlify.com/projects/vape-better/deploys)
+
 # VapeV4-Better
+
+🌐 **Site:** https://vape-better.netlify.app
 
 # ENGLISH
 

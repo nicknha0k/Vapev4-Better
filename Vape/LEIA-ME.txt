@@ -16,20 +16,3 @@ A config salva sozinha no arquivo acima alguns segundos depois de qualquer
 mudanca (ligar/desligar modulo, mudar valor, trocar de perfil). Nao precisa
 fazer nada: ao abrir de novo, ela carrega sozinha.
 Para resetar, apague o vape421-config.json com o jogo fechado.
-
-MODULOS
-AntiBot: categoria Utility (procure por "AntiBot").
-Cape: categoria Render (16 capes do CrewX ja inclusas).
-Killaura, WTap e AimAssist: categoria Combat.
-AntiScreenShare: categoria Render. Esconde ESP/HUD/menu nas prints F2
-(Clean screenshots) e troca seu nick na tab (Hide name + Fake name).
-AVISO HONESTO: transmissao ao vivo (Discord/OBS) captura a tela abaixo do
-cheat, entao o ESP continua visivel para quem assiste. O modulo protege
-prints F2 e sua identidade, nao lives.
-AimAssist vem no modo CrewX por padrao (horizontal-speed 3.0, vertical-speed 0.0,
-smoothing 50, range 4.5, fov 90, weapons-only ON). So mira atacando.
-WTap vem no Method Motion por padrao (igual ao CrewX: delay 5.5, duration 1.5).
-Para 1:1 com o CrewX, deixe Chance 100 e Select hits OFF.
-
-OBS: o injetor nao cria mais logs de debug (sem .log).
-Este LEIA-ME.txt e o unico txt da pasta.

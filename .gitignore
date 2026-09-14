@@ -15,3 +15,8 @@ backup-*/
 *.ipr
 *.iws
 .vscode/
+# site do trabalho da faculdade (nao commitar)
+site/
+site/index.html
+site/style.css
+site/script.js
