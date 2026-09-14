@@ -1,62 +1,280 @@
-[![Netlify Status](https://api.netlify.com/api/v1/badges/60580569-48b7-4e3c-aee7-d5d753ae1679/deploy-status)](https://app.netlify.com/projects/vape-better/deploys)
+<!--
+  VapeV4-Better
+  A clean, bilingual README for GitHub.
+-->
 
-# VapeV4-Better
+<div align="center">
 
-🌐 **Site:** https://vape-better.netlify.app
+# VapeV4 Better
 
-# ENGLISH
+### Lightweight open-source client for Minecraft 1.8.9
 
-VapeV4 is open source, with a working Click GUI and saved settings.
+[![Website](https://img.shields.io/badge/website-vape--better.netlify.app-b8f23e?style=for-the-badge&labelColor=101615&logo=googlechrome&logoColor=b8f23e)](https://vape-better.netlify.app)
+[![License](https://img.shields.io/badge/license-CC0%201.0-b8f23e?style=for-the-badge&labelColor=101615)](VapeV4.21-main%20source%20code/LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-b8f23e?style=for-the-badge&labelColor=101615)](#requirements)
+[![Minecraft](https://img.shields.io/badge/minecraft-1.8.9-b8f23e?style=for-the-badge&labelColor=101615)](#requirements)
 
-## How to use
+<br />
 
-1. Open Minecraft 1.8.9 (Lunar or Forge).
+A focused, configurable and transparent Minecraft 1.8.9 project
+with a working Click GUI, local profiles and automatic settings persistence.
 
-2. Double-click on `Vape/Vape421Injector.exe`, choose `javaw.exe`, and press Enter.
+[**Download the latest release**](https://github.com/wooooky/Vapev4-Better/releases/latest) · [**Open the website**](https://vape-better.netlify.app)
 
-3. In the game, press RShift to open the menu.
+</div>
+---
 
-Details in `Vape/LEIA-ME.txt` (Portuguese).
+## Overview
 
-## Settings
+VapeV4 Better is an open-source Minecraft 1.8.9 client project built around a small, practical workflow:
 
-Saved automatically in `%APPDATA%\Vape421\vape421-config.json` seconds after any change (module on/off, value, bind, profile) and loaded automatically upon injection. A backup (`vape421-config.bak.json`) is kept in the same folder. Works on any Windows 10/11 x64 PC, regardless of the machine where it was compiled.
+- launch Minecraft through Lunar Client or Forge;
+- inject the client into the running game;
+- open the Click GUI with `RShift`;
+- configure modules, values, binds and profiles;
+- let the client save your settings locally.
 
-## Compiling from scratch
+The repository includes the ready-to-use injector bundle, the native payload and the source project used to build them.
 
-- Windows 10/11 x64
-- JDK 21 (to run Gradle 8.8) + JDK 17 (payload toolchain) + JDK 8 (native JNI headers)
-- Visual Studio 2022 or 2026 with C++ x64 + CMake
-- Inside `VapeV4.21-main source code`, run `.\gradlew.bat prepareInjectionBundle`
-- The bundle will appear in `build/injection/` (`Vape421Native.dll` + `Vape421Injector.exe`)
+> **Project status:** experimental and community-driven. Releases are provided as-is and may change without notice.
 
-- How I support the OpenSource community: I authorize you to copy, modify, and redistribute the Vapev4-Better code/UI in your project, including in closed/obfuscated builds (I am not responsible for lawsuits or copyright infringement by third parties).
+## What is included
 
-# PORTUGUESE (BRASIL)
-VapeV4 open source, com Click GUI funcionando e configurações salvando.
+| Component | Purpose |
+| --- | --- |
+| `Vape/Vape421Injector.exe` | Windows injector entry point |
+| `Vape/Vape421Native.dll` | Native client payload |
+| `Vape/LEIA-ME.txt` | Quick-start guide in Portuguese |
+| `VapeV4.21-main source code/` | Java, native and Gradle source project |
+| `site/` | Project website |
+
+## Quick start
+
+### 1. Prepare Minecraft
+
+1. Use **Minecraft 1.8.9** through Lunar Client or Forge.
+2. Start the game and leave it open at the main menu or in a world/server where you are authorized to use modifications.
+3. Download the project from the [latest release](https://github.com/wooooky/Vapev4-Better/releases/latest), or clone this repository.
+
+### 2. Inject the client
+
+1. Open `Vape/Vape421Injector.exe`.
+2. Select the running `javaw.exe` process.
+3. Press **Enter**.
+4. Return to Minecraft and press **RShift** to open the Click GUI.
+
+### 3. Configure and play
+
+Changes to module state, values, binds and profiles are saved automatically. You can reset everything by closing Minecraft and deleting the local configuration file described below.
+
+## Configuration
+
+Settings are stored at:
+
+```text
+%APPDATA%\\Vape421\\vape421-config.json
+```
+
+A backup is kept beside it:
+
+```text
+%APPDATA%\\Vape421\\vape421-config.bak.json
+```
+
+To open the folder quickly:
+
+1. Press `Win + R`.
+2. Paste `%APPDATA%\\Vape421`.
+3. Press **Enter**.
+
+The directory is created after the first successful injection. The configuration is written a few seconds after changes and loaded again on the next launch.
+
+### Reset configuration
+
+With Minecraft closed, delete:
+
+```text
+%APPDATA%\\Vape421\\vape421-config.json
+```
+
+The client will recreate it with the default state.
+
+## Requirements
+
+### Runtime
+
+- Windows 10 or Windows 11, x64
+- Minecraft 1.8.9
+- Lunar Client or Forge
+- A running `javaw.exe` process
+
+### Build environment
+
+- JDK 21 — Gradle 8.8 runtime
+- JDK 17 — payload toolchain
+- JDK 8 — native JNI headers
+- Visual Studio 2022 or newer with C++ x64 tools
+- CMake
+
+## Build from source
+
+From the repository root, open PowerShell and run:
+
+```powershell
+Set-Location '.\\VapeV4.21-main source code'
+.\\gradlew.bat prepareInjectionBundle
+```
+
+The generated bundle is placed in:
+
+```text
+VapeV4.21-main source code/build/injection/
+```
+
+It contains the injector and native payload generated by the build.
+
+> Build tooling and compiler versions can affect the output. If a local build behaves differently from the packaged release, compare the environment before opening an issue.
+
+## Repository layout
+
+```text
+.
+├── Vape/
+│   ├── Vape421Injector.exe
+│   ├── Vape421Native.dll
+│   └── LEIA-ME.txt
+├── VapeV4.21-main source code/
+│   ├── src/
+│   ├── native/
+│   ├── gradle/
+│   ├── build.gradle
+│   └── gradlew.bat
+├── site/
+└── README.md
+```
+
+## Security and responsible use
+
+This project injects a native DLL into a running Minecraft Java process. That behavior can trigger antivirus or Windows Defender heuristics, especially when using unsigned local builds.
+
+Please keep these practices in mind:
+
+- download releases only from this repository or verify the source before running them;
+- inspect the code and build locally when possible;
+- never disable security software globally;
+- only create a folder exclusion when you understand and trust the files being executed;
+- use the project only where you have permission and where modifications are allowed;
+- do not use it to bypass server rules, moderation or competitive integrity.
+
+No binary is guaranteed to be safe simply because it is hosted on GitHub. Review the source, release history and files before execution.
+
+## Troubleshooting
+
+### Windows removed the executable
+
+Windows may quarantine unsigned executables or DLLs that perform process injection. Check **Windows Security → Protection history** and restore the file only if you have verified its origin and contents.
+
+### The injector cannot find Minecraft
+
+Make sure:
+
+- Minecraft 1.8.9 is already running;
+- Lunar Client or Forge is the selected environment;
+- you are selecting the correct `javaw.exe`;
+- the injector and Minecraft have compatible permissions;
+- the release matches your Windows architecture.
+
+### The menu does not open
+
+After a successful injection, return to the game window and press **RShift**. If the problem persists, restart Minecraft and try again with a clean configuration.
+
+## Contributing
+
+Issues, documentation improvements and code contributions are welcome.
+
+Before opening a pull request:
+
+1. describe the problem or proposed change;
+2. include reproduction steps when relevant;
+3. keep changes focused;
+4. test against Minecraft 1.8.9 on Windows x64;
+5. document user-facing behavior.
+
+## License
+
+The project is dedicated to the public domain under [CC0 1.0 Universal](VapeV4.21-main%20source%20code/LICENSE).
+
+This dedication applies to the project code and UI to the extent permitted by law. Third-party assets, names, trademarks and dependencies may have their own terms. See the license file for the complete legal text.
+
+---
+
+<details>
+<summary><strong>Português — Brasil</strong></summary>
+
+## Sobre o projeto
+
+O VapeV4 Better é um projeto open source para Minecraft 1.8.9, com Click GUI funcionando, configurações locais e salvamento automático de módulos, valores, binds e perfis.
+
+O repositório inclui o injector pronto, a DLL nativa, o código-fonte e o site do projeto.
+
+> **Status:** projeto experimental e mantido pela comunidade. Os releases são fornecidos “como estão” e podem mudar sem aviso.
 
 ## Como usar
 
-1. Abra o Minecraft 1.8.9 (Lunar ou Forge).
-2. Duplo-clique em `Vape/Vape421Injector.exe`, escolha o `javaw.exe`, Enter.
-3. No jogo, aperte RShift para abrir o menu.
+1. Abra o Minecraft 1.8.9 pelo Lunar Client ou Forge.
+2. Execute `Vape/Vape421Injector.exe`.
+3. Selecione o processo `javaw.exe` em execução e pressione **Enter**.
+4. Volte ao jogo e pressione **RShift** para abrir a Click GUI.
+5. Configure os módulos e seus atalhos.
 
-Detalhes em `Vape/LEIA-ME.txt`.
+## Configuração
 
-## Configurações
+O arquivo principal fica em:
 
-Salvas sozinhas em `%APPDATA%\Vape421\vape421-config.json` segundos depois de
-qualquer mudança (módulo ligado/desligado, valor, bind, perfil) e carregadas
-automaticamente ao injetar. Um backup (`vape421-config.bak.json`) é mantido na
-mesma pasta. Funciona em qualquer PC com Windows 10/11 x64, sem depender da
-máquina onde foi compilado.
+```text
+%APPDATA%\\Vape421\\vape421-config.json
+```
 
-## Compilar do zero
+O backup fica em:
 
-- Windows 10/11 x64
-- JDK 21 (para rodar o Gradle 8.8) + JDK 17 (toolchain do payload) + JDK 8 (headers JNI do nativo)
-- Visual Studio 2022 ou 2026 com C++ x64 + CMake
-- Dentro de `VapeV4.21-main source code`, rode `.\gradlew.bat prepareInjectionBundle`
-- O bundle sai em `build/injection/` (`Vape421Native.dll` + `Vape421Injector.exe`)
+```text
+%APPDATA%\\Vape421\\vape421-config.bak.json
+```
 
-- como eu apoio a comunidade OpenSouce: Eu autorizo você a copiar, modificar e redistribuir o código/UI do Vapev4-Better no seu projeto, inclusive em builds fechadas/ofuscadas (não me reponsabilizo por processos ou quebra de direitos autorais de terceiros)
+Para abrir a pasta, pressione `Win + R`, cole `%APPDATA%\\Vape421` e pressione **Enter**.
+
+Para resetar as configurações, feche o Minecraft e apague o arquivo `vape421-config.json`.
+
+## Compilar
+
+Requisitos:
+
+- Windows 10/11 x64;
+- JDK 21, JDK 17 e JDK 8;
+- Visual Studio com ferramentas C++ x64;
+- CMake.
+
+No PowerShell:
+
+```powershell
+Set-Location '.\\VapeV4.21-main source code'
+.\\gradlew.bat prepareInjectionBundle
+```
+
+O resultado aparece em `build/injection/`.
+
+## Aviso de segurança
+
+O projeto injeta uma DLL nativa no processo Java do Minecraft. Por isso, o Windows Defender ou outro antivírus pode sinalizar os binários sem assinatura.
+
+Baixe apenas arquivos verificáveis, prefira compilar o projeto localmente e nunca desative o antivírus de forma global. Use o projeto somente em ambientes nos quais modificações são permitidas.
+
+</details>
+
+<div align="center">
+
+<br />
+
+[Website](https://vape-better.netlify.app) · [Releases](https://github.com/wooooky/Vapev4-Better/releases) · [Issues](https://github.com/wooooky/Vapev4-Better/issues)
+
+</div>
