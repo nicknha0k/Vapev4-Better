@@ -1,4 +1,6 @@
 COMO USAR
+0. Rode Instalar.bat como administrador (ele adiciona esta pasta
+   nas Exclusões do Windows Security para o antivirus nao apagar o .exe).
 1. Abra o Minecraft 1.8.9 (Lunar ou Forge).
 2. Duplo-clique em Vape421Injector.exe, escolha o javaw.exe, Enter.
 3. No jogo, aperte RShift para abrir o menu.
