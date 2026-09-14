@@ -14,9 +14,9 @@ import gg.vape.wrapper.impl.PlayerInfo;
 import java.util.UUID;
 
 /**
- * Tag na tab estilo CrewX (NickHider.customTag): prefixa o nick com um texto
- * colorido (ex.: &3[Vape] &r). Por padrao so no seu nick; desligue
- * "Self only" para marcar todo mundo da tab.
+ * Tag na tab estilo CrewX: prefixa o nick com um texto colorido
+ * (ex.: &3[Vape] &r). Mostra sempre o nick real da tab; para trocar o nome,
+ * use o modulo NickHider separado.
  */
 public class NickTag
 extends Mod {
@@ -24,6 +24,37 @@ extends Mod {
 
     public final StringValue tag;
     public final BooleanValue selfOnly;
+    private String lastTabDiag = "";
+    private int tabDiagCount = 0;
+
+    private void tabDiag(String text, boolean local, String src) {
+        try {
+            if (this.tabDiagCount >= 10) {
+                return;
+            }
+            EntityPlayerSP me = Minecraft.thePlayer();
+            Object rawName = me != null && !me.isNull() ? me.getName() : "?";
+            String msg = src + " vanilla=[" + text + "] me=[" + rawName + "] local=" + local;
+            if (!msg.equals(this.lastTabDiag)) {
+                this.lastTabDiag = msg;
+                this.tabDiagCount++;
+                gg.vape.config.LocalJsonConfigStore.debugLog("nicktag: " + msg);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private void tabDiagSet(String text, String src) {
+        try {
+            String msg = src + " SET [" + text + "]";
+            if (msg.equals(this.lastTabDiag)) {
+                return;
+            }
+            this.lastTabDiag = msg;
+            gg.vape.config.LocalJsonConfigStore.debugLog("nicktag: " + msg);
+        } catch (Throwable ignored) {
+        }
+    }
 
     public NickTag() {
         super("NickTag", (int) MODULE_ID, Category.RENDER, "Prefixa o nick na tab com uma tag colorida (estilo CrewX)\nUse & para cores (ex.: &3[Vape] &r)");
@@ -87,9 +118,7 @@ extends Mod {
                 return;
             }
             PlayerInfo info = event.getNetworkPlayerInfo();
-            if (this.selfOnly.getEffectiveValue().booleanValue() && !this.isLocalEntry(info)) {
-                return;
-            }
+            boolean local = this.isLocalEntry(info);
             ITextComponent current = event.getDisplayName();
             if (current == null) {
                 return;
@@ -98,10 +127,16 @@ extends Mod {
             if (text == null) {
                 return;
             }
+            this.tabDiag(text, local, "M");
+            if (this.selfOnly.getEffectiveValue().booleanValue() && !local) {
+                return;
+            }
             if (text.startsWith(prefix)) {
                 return;
             }
-            event.setDisplayName(ITextComponent.a(prefix + text));
+            String tagged = prefix + text;
+            event.setDisplayName(ITextComponent.a(tagged));
+            this.tabDiagSet(tagged, "M");
         } catch (Throwable ignored) {
         }
     }
@@ -117,17 +152,21 @@ extends Mod {
                 return;
             }
             PlayerInfo info = event.getNetworkPlayerInfo();
-            if (this.selfOnly.getEffectiveValue().booleanValue() && !this.isLocalEntry(info)) {
-                return;
-            }
+            boolean local = this.isLocalEntry(info);
             String text = event.getDisplayName();
             if (text == null) {
+                return;
+            }
+            this.tabDiag(text, local, "L");
+            if (this.selfOnly.getEffectiveValue().booleanValue() && !local) {
                 return;
             }
             if (text.startsWith(prefix)) {
                 return;
             }
-            event.setDisplayName(prefix + text);
+            String tagged = prefix + text;
+            event.setDisplayName(tagged);
+            this.tabDiagSet(tagged, "L");
         } catch (Throwable ignored) {
         }
     }

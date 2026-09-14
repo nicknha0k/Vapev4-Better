@@ -164,6 +164,17 @@ extends Mod {
     private int knockbackTicks;
     private final HashMap<BlockData, HashSet<BlockData>> blockGraphMap;
     private int previousSlot = -1;
+    private String diagLastMsg = "";
+
+    private void clutchDiag(String message) {
+        try {
+            if (message != null && !message.equals(this.diagLastMsg)) {
+                this.diagLastMsg = message;
+                gg.vape.config.LocalJsonConfigStore.debugLog("clutch: " + message);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
     private final BooleanValue onMoreThanXBlocks;
     private final BooleanValue allowStaircaseUp;
 
@@ -1596,11 +1607,15 @@ extends Mod {
         this.graph.forwardKeyDown = forwardPressed;
         boolean flying = localPlayer.C$src$Lgg_vape_wrapper_impl_ModelPlayer_$19uhx86().isFlying();
         if (this.pauseRequested || this.movementLock.isLocked() || this.rotationClaim.isBlockedFor(this) || Minecraft.currentScreen().isNotNull()) {
+            this.clutchDiag("reset pause=" + this.pauseRequested + " moveLock=" + this.movementLock.isLocked() + " rotBlocked=" + this.rotationClaim.isBlockedFor(this));
             this.resetState();
             return;
         }
         ItemStack blockItem = this.findBlockItem(localPlayer);
         if (flying || localPlayer.S$src$Z$151gttj() || localPlayer.f$src$Z$fst3rk() || blockItem == null) {
+            if (blockItem == null) {
+                this.clutchDiag("reset sem-bloco-hotbar");
+            }
             this.resetState();
             return;
         }
@@ -1674,6 +1689,7 @@ extends Mod {
                             this.moveDelayTicks = 0;
                             this.returnDelayTicks = 0;
                             this.clutchPath = clutchPath;
+                            this.clutchDiag("PATH OK");
                             this.switchToBlockSlotOnActivate(localPlayer);
                             this.prevRightClickHeld = jumpPressed;
                             gameSettings.F().e();
@@ -1842,6 +1858,7 @@ extends Mod {
                 }
                 if (fallingIntoVoid || lethalFall || exceedsBlockThreshold) {
                     if (!this.rotationClaim.isOwnedBy(this) && !this.rotationClaim.acquire(this, this.silentAim.getEffectiveValue())) {
+                        this.clutchDiag("reset sem-rotation");
                         return;
                     }
                     long searchStartNanos = System.nanoTime();
@@ -1856,6 +1873,7 @@ extends Mod {
                         this.moveDelayTicks = 0;
                         this.returnDelayTicks = 0;
                         this.clutchPath = clutchPath;
+                        this.clutchDiag("PATH OK");
                         this.switchToBlockSlotOnActivate(localPlayer);
                         this.prevRightClickHeld = jumpPressed;
                         gameSettings.F().e();

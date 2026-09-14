@@ -50,6 +50,7 @@ import gg.vape.module.combat.HitSelect;
 import gg.vape.module.combat.silentaura.SilentAuraClicker;
 import gg.vape.module.render.BedPlates;
 import gg.vape.module.render.Cape;
+import gg.vape.module.render.NickHider;
 import gg.vape.module.render.NickTag;
 import gg.vape.module.render.AntiScreenShare;
 import gg.vape.module.world.MurderFinder;
@@ -245,6 +246,7 @@ implements EventListener {
         this.registerModules(Stream.of(new AntiBot()));
         this.registerModules(Stream.of(new Cape()));
         this.registerModules(Stream.of(new NickTag()));
+        this.registerModules(Stream.of(new NickHider()));
         this.registerModules(Stream.of(new AntiScreenShare()));
         this.registerModules(Stream.of(new Triggerbot(), new HitSwap(), new AutoAnchor(), new WindCharge(), new CrystalAura(), new AutoTotem()), ModManager::addMinecraft1214Constraint);
         this.registerModules(Stream.of(new NoFall(), new NoSlowdown(), new Speed(), new BlockHit(), new Timer()), ModManager::addModernMinecraftConstraint);
