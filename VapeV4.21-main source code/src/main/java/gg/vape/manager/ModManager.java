@@ -22,7 +22,6 @@ import gg.vape.module.blatant.Fly;
 import gg.vape.module.blatant.HitBoxes;
 import gg.vape.module.blatant.InvWalk;
 import gg.vape.module.blatant.KeepSprint;
-import gg.vape.module.blatant.KillAura;
 import gg.vape.module.blatant.NoFall;
 import gg.vape.module.blatant.NoSlowdown;
 import gg.vape.module.blatant.SafeWalk;
@@ -197,7 +196,7 @@ implements EventListener {
         coreModules[29] = new SafeWalk();
         coreModules[30] = new Projectiles();
         coreModules[31] = new Fly();
-        coreModules[32] = new KillAura();
+        // Slot 32 aposentado com a remocao do KillAura (mantido null e filtrado abaixo).
         coreModules[33] = new Arrows();
         coreModules[34] = new BlinkPacketRenderModule();
         coreModules[35] = new AutoPearl();
@@ -228,7 +227,7 @@ implements EventListener {
         coreModules[59] = new AutoClickerInputModule();
         coreModules[60] = new BedPlates();
         coreModules[61] = new SkinChanger();
-        this.registerModules(Stream.of(coreModules));
+        this.registerModules(Stream.of(coreModules).filter(java.util.Objects::nonNull));
         ModRegistrationBuilder.create().setModule(new Explosions()).addVersionConstraint(ForgeVersion.MC_1_16_5.b()).registerWith(this);
         Mod[] versionConstrainedModules = new Mod[2];
         versionConstrainedModules[0] = new Chams();

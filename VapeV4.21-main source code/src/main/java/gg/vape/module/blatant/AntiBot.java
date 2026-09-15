@@ -347,6 +347,17 @@ extends Mod {
         for (Object entityObject : worldClient.X()) {
             EntityPlayer entityPlayer = new EntityPlayer(entityObject);
             if (MappedClasses.z5.isAssignableFrom(entityObject.getClass()) || this.botScoreByEntityId.getOrDefault(entityPlayer.S(), 0) >= 3000 && entityPlayer.n$src$Z$fx7gig()) continue;
+            boolean listedInTab = false;
+            try {
+                listedInTab = this.playerUuids.contains(entityPlayer.X$src$Ljava_util_UUID_$1o5dyg6());
+            } catch (Throwable ignored) {
+            }
+            if (listedInTab && !this.botScoreByEntityId.containsKey(entityPlayer.S())) {
+                // Player real (ta na tab): confianca imediata. Sem isso ele
+                // passava ~1s como "bot" (score < 15) e o SilentAura/NameTags
+                // ignoravam ele; bot fora da tab continua com score baixo.
+                this.botScoreByEntityId.put(entityPlayer.S(), 15);
+            }
             if (localPlayer.l() > 250 && entityPlayer.l() <= 2 && !this.trackedEntities.contains(entityPlayer.getObject())) {
                 double deltaX = localPlayer.z() - entityPlayer.z();
                 double deltaY = localPlayer.N() - entityPlayer.h();
@@ -386,7 +397,10 @@ extends Mod {
             double absoluteVerticalMotion = Math.abs(verticalMotion);
             boolean hasSolidBlockBelow = this.isSolidBlockAt(worldClient, blockX,
                     (int)(entityPlayer.N() - (verticalMotion < 0.05 ? 0.45 : 0.9)), blockZ);
-            if (occupiesNonSolidBlock && hasSolidBlockBelow) {
+            if (occupiesNonSolidBlock && hasSolidBlockBelow && listedInTab) {
+                // So quem ta na tab sobe score parado: bot fora da tab nao
+                // "vira legitimo" so por ficar parado (era assim que ele
+                // escapava do filtro segundos depois de spawnar).
                 this.botScoreByEntityId.put(entityPlayer.S(), this.botScoreByEntityId.getOrDefault(entityPlayer.S(), 0) + (absoluteVerticalMotion < 0.05 ? (entityPlayer.J$src$Z$fdev5g() ? 1 : 3) : 1));
                 continue;
             }
@@ -577,7 +591,7 @@ extends Mod {
             return false;
         }
         // BUGFIX: o guard antigo ("if (!IS_LEGACY_1_7) return false") desligava
-        // o AntiBot em 1.8.9, entao AimAssist/KillAura nunca filtravam bots.
+        // o AntiBot em 1.8.9, entao AimAssist/SilentAura nunca filtravam bots.
         // Removido: o AntiBot agora funciona em 1.7.10 e 1.8.9+.
         if (entity.isInstance(MappedClasses.z5)) {
             return false;

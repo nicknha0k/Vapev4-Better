@@ -18,7 +18,6 @@ import gg.vape.manager.client.OnlineConnectionManager;
 import gg.vape.manager.client.OnlineConnectionState;
 import gg.vape.manager.client.OnlineSettings;
 import gg.vape.mapping.MappedClasses;
-import gg.vape.module.blatant.KillAura;
 import gg.vape.module.combat.AimAssist;
 import gg.vape.module.combat.SilentAura;
 import gg.vape.module.render.NameTags;
@@ -63,7 +62,6 @@ implements EventListener {
     private String lastServerAddress;
     private final SilentAura silentAura;
     private final AimAssist aimAssist;
-    private final KillAura killAura = Vape.INSTANCE.getModManager().getMod(KillAura.class);
     private long manualTargetTimestamp;
     @Nullable
     private EntityPlayer manualTarget;
@@ -267,15 +265,6 @@ implements EventListener {
     @Nullable
     public EntityPlayer getCombatTarget() {
         Wrapper wrapper;
-        if (this.killAura.isEnabled() && !this.killAura.targets.isEmpty()) {
-            wrapper = Minecraft.currentScreen();
-            if (!this.killAura.guiCheck.getEffectiveValue().booleanValue() || ((GuiScreen)wrapper).isNull()) {
-                for (EntityLivingBase entityLivingBase : this.killAura.targets) {
-                    if (!entityLivingBase.isInstance(MappedClasses.Yl)) continue;
-                    return new EntityPlayer(entityLivingBase.getObject());
-                }
-            }
-        }
         if (this.silentAura.isEnabled()) {
             wrapper = this.silentAura.getTarget();
             GuiScreen currentScreen = Minecraft.currentScreen();

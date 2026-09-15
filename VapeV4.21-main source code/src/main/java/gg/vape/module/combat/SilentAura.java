@@ -260,7 +260,7 @@ extends Mod {
     }
 
     public SilentAura() {
-        super("SilentAura", (int)MODULE_ID, Category.COMBAT, "Simulates feel of Killaura\nAttacks and aims safely using built in AutoClicker to click, and Silent Aim system to aim");
+        super("SilentAura", (int)MODULE_ID, Category.COMBAT, "Simulates feel of an aura\nAttacks and aims safely using built in AutoClicker to click, and Silent Aim system to aim");
         this.requireMouseDown = BooleanValue.create(this, "Require mouse down", false);
         this.disableOnDeath = BooleanValue.create(this, "Disable on death", false);
         this.showTarget = BooleanValue.create(this, "Show target", false);

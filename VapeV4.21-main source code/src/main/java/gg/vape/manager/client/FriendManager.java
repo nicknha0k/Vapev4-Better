@@ -190,7 +190,7 @@ public class FriendManager {
     }
 
     public FriendManager() {
-        this.useFriends = BooleanValue.create(this, "Use friends", true, "If enabled, any usernames inside your Minecraft friends list will be excluded from certain modules\nFor example they will not be targeted by KillAura");
+        this.useFriends = BooleanValue.create(this, "Use friends", true, "If enabled, any usernames inside your Minecraft friends list will be excluded from certain modules\nFor example they will not be targeted by SilentAura");
         this.useAlias = BooleanValue.create(this, "Use alias", true);
         this.spoofAlias = BooleanValue.create(this, "Spoof alias", false, "Replace the friend's name in chat, tablist, and regular nametags with their alias.");
         this.recolorVisuals = BooleanValue.create(this, "Recolor visuals", true, "Re-colors certain render modules to use \"Friends Color\" on friends");
